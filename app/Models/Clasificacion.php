@@ -16,6 +16,6 @@ class Clasificacion extends Model
     ];
 
     public function clientes(){
-        return $this->hasMany(cliente::class);
+        return $this->hasMany(cliente::class, 'id_clasificacion');
     }
 }
