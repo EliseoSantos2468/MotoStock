@@ -21,5 +21,18 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => 'password123'
         ]);
+
+        // seeders
+        $this->call([
+            ReferenciasPersonalesSeeder::class,
+            ClasificacionSeeder::class,
+            InteresSeeder::class,
+            DepartamentoMunicipioSeeder::class,
+            MarcaSeeder::class,
+            ProductoSeeder::class,
+            ProductoMarcaSeeder::class,
+            ClienteSeeder::class,
+            ClienteReferenciaSeeder::class,
+        ]);
     }
 }

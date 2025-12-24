@@ -20,23 +20,30 @@
     <body class="font-sans antialiased">
         <x-banner />
 
-        <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-gray-100 grid grid-cols-[280px_1fr]">
+        
+
+        <x-side-bar />
+
+
+        <div class="flex flex-col">
+            
             @livewire('navigation-menu')
 
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <main class="p-8 flex-1">
+                
+                @if (isset($header))
+                    <div class="mb-8">
                         {{ $header }}
                     </div>
-                </header>
-            @endif
+                @endif
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
+                <div class="bg-white shadow-sm rounded-lg p-6">
+                    {{ $slot }}
+                </div>
             </main>
         </div>
+    </div>
 
         @stack('modals')
 
