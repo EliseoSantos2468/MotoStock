@@ -15,14 +15,6 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <!-- Styles -->
-        <style>
-            :root {
-                --primary-color: {{ $primaryColor }};
-                --secondary-color: {{ $secondaryColor }};
-                --white: {{$white}};
-                --black: {{$black}};
-            }
-        </style>
         @livewireStyles
     </head>
     <body class="font-sans antialiased">

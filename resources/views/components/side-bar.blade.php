@@ -1,4 +1,4 @@
-<aside class="sidebar text-white min-h-screen transition-all duration-300" style="background-color: var(--primary-color)">
+<aside class="sidebar text-white min-h-screen transition-all duration-300" style="background-color: {{$primaryColor}}">
     <nav class="sidebar-nav py-6 mt-5">
         <ul class="nav-list primary-nav space-y-2">
             
@@ -10,7 +10,7 @@
                     </svg>
                     <span class="nav-label flex-1">Escritorio</span>
                 </a>
-                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: var(--secondary-color)">
+                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: {{$secondaryColor}}">
                     <li class="nav-item">
                         <a href="#" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Ver Resumen</a>
                     </li>
@@ -27,9 +27,9 @@
                     </svg>
                     <span class="nav-label flex-1">Clientes</span>
                 </a>
-                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: var(--secondary-color)">
+                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: {{$secondaryColor}}">
                     <li class="nav-item">
-                        <a href="#" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Lista de Clientes</a>
+                        <a href="{{route('lista-clientes')}}" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Lista de Clientes</a>
                     </li>
                 </ul>
             </li>
@@ -64,7 +64,7 @@
                 </svg>
                     <span class="nav-label flex-1">Creditos</span>
                 </a>
-                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: var(--secondary-color)">
+                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: {{$secondaryColor}}">
                     <li class="nav-item">
                         <a href="#" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Creditos</a>
                     </li>
