@@ -31,6 +31,10 @@ class Cliente extends Model
         return $this->belongsTo(Departamento::class, 'id_departamento');
     }
 
+    public function municipio(){
+        return $this->belongsTo(Municipio::class, 'id_municipio');
+    }
+
     public function recibos(){
         return $this->hasMany(Recibo::class,'id_cliente');
     }

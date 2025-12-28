@@ -4,6 +4,9 @@
     <x-action-message class="mr-3" on="cliente-guardado">
         {{ __('¡Cliente guardado con éxito!') }}
     </x-action-message>
+    <x-action-message class="mr-3" on="cliente-eliminado">
+        {{ __('¡Cliente Eliminado con éxito!') }}
+    </x-action-message>
     {{-- modal crear --}}
     <x-dialog-modal wire:model.live="modalCrear">
         <x-slot name="title">
@@ -13,7 +16,7 @@
         <x-slot name="content">
             <form id="form-crear-cliente" wire:submit="create" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <x-form-clientes :departamentos="$departamentos" :municipios="$municipios"/>
+                <x-form-clientes :departamentos="$departamentos" :municipios="$municipios" :referencias="$referencias"/>
 
             </form>
         </x-slot>
@@ -33,11 +36,11 @@
     {{-- modal confirmacion --}}
         <x-confirmation-modal wire:model.live="modalConfirm">
             <x-slot name="title">
-                {{ __('¿Crear Nuevo Cliente?')}}
+                {{$modalConfirmTitle}}
             </x-slot>
 
             <x-slot name="content">
-                {{ __('¿Crear Nuevo Cliente?')}}
+                {{$modalConfirmContent}}
             </x-slot>
 
             <x-slot name="footer">
@@ -45,9 +48,15 @@
                     No
                 </x-secondary-button>
 
-                <x-button type="submit" form="form-crear-cliente" class="ml-3">
-                    Si
-                </x-button>
+                @if ($form)                    
+                    <x-button type="submit" form="form-{{$form}}-cliente" class="ml-3">
+                        Si
+                    </x-button>
+                @else
+                    <x-button type="submit" wire:click="delete" class="ml-3">
+                        Si
+                    </x-button>
+                @endif
             </x-slot>
         </x-confirmation-modal>
     {{-- fin modal confirmacion --}}
@@ -79,7 +88,7 @@
             </select>
         </div>
 
-        <x-btn-crear wire:click="$set('modalCrear', true)">
+        <x-btn-crear wire:click="crearCliente">
             Cliente
         </x-btn-crear>
     </div>
@@ -105,8 +114,8 @@
                 </x-td>
                 <x-td class="flex justify-end gap-2 text-right text-sm font-medium ">
                     <x-btn-editar wire:click="" />
-                    <x-btn-Eliminar wire:click="" />
-                    <x-btn-Ver wire:click="" />
+                    <x-btn-Eliminar wire:click="eliminarCliente({{$cliente->id}})" />
+                    <x-btn-Ver wire:click="show({{$cliente->id}})" />
                 </x-td>
             </x-tr>
         @endforeach

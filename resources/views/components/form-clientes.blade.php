@@ -1,4 +1,4 @@
-@props(['departamentos' => [], 'municipios' => []])
+@props(['departamentos' => [], 'municipios' => [], 'referencias' => []])
 
 <div>
     <x-label for="nombres" value="Nombres" />
@@ -45,7 +45,7 @@
     </select>
 </div>
 
-<div>
+<div class="md:col-span-2">
     <x-label for="municipio" value="Municipio" />
     <select name="" id="municipio" wire:model="id_municipio" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
         <option value="" selected disabled>Seleccione un municipio</option>
@@ -53,4 +53,42 @@
             <option value="{{$municipio->id}}">{{$municipio->nombre_municipio}}</option>
         @endforeach
     </select>
+</div>
+
+<div class="md:col-span-2">
+    <x-label for="referencias" value="Referencias" />
+    <div id="referencias" class="flex gap-2 justify-between">
+        <x-input wire:model="ref_nombre" type="text" name="" id="" placeholder="Nombre referencia" class="w-full"/>
+        <x-input wire:model="ref_telefono" type="number" name="" id="" placeholder="Telefono referencia" class="w-full"/>
+        <a href="" wire:click.prevent='agregarReferencia' class="bg-red-500 items-center text-white/80 hover:text-white rounded-full">
+            <svg
+            class="w-10 h-10"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            >
+            <path d="M12 5l0 14" />
+            <path d="M5 12l14 0" />
+            </svg>
+        </a>
+    </div>
+</div>
+
+<div class="md:col-span-2 flex flex-col gap-2 ">
+    @if ($referencias)
+        @foreach ($referencias as $index => $referencia)
+        <div class="w-full p-3 bg-slate-600 text-white rounded-md flex flex-row gap-3 items-center justify-between">
+            <p>{{$index+1}}</p>
+            <p><strong>Nombre: </strong>{{$referencia['nombre_ref']}}</p>
+            <p><strong>Telefono: </strong>{{$referencia['telefono_ref']}}</p>
+            <x-btn-eliminar wire:click='eliminarReferencia({{$index}})' />    
+         </div>
+        @endforeach
+    @else
+        <p class="w-full text-gray-600 font-bold text-center">No hay referencias disponibles</p>
+    @endif
 </div>
