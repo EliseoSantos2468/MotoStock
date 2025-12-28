@@ -24,11 +24,15 @@ class Cliente extends Model
     ];
     
     public function clasificacion(){
-        return $this->belongsTo(clasificacion::class);
+        return $this->belongsTo(clasificacion::class, 'id_clasificacion');
     }
 
     public function departamento(){
-        return $this->belongsTo(Departamento::class);
+        return $this->belongsTo(Departamento::class, 'id_departamento');
+    }
+
+    public function municipio(){
+        return $this->belongsTo(Municipio::class, 'id_municipio');
     }
 
     public function recibos(){

@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Clientes\ListaClientes;
+use App\Livewire\Clientes\VerClientes;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -17,4 +18,5 @@ Route::middleware([
     })->name('dashboard');
 
     Route::get('/clientes', ListaClientes::class)->name('lista-clientes');
+    Route::get('/clientes/{cliente}', VerClientes::class)->name('ver-cliente');
 });

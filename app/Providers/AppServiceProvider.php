@@ -24,5 +24,8 @@ class AppServiceProvider extends ServiceProvider
         View::share('secondaryColor', "#3b82f6");
         View::share('white', '#ffffff');
         View::share('black', '#000000');
+        View::share('btnEditar', '#f59e0b');
+        View::share('btnEliminar', '#ef4444');
+        View::share('btnVer', '#64748b');
     }
 }

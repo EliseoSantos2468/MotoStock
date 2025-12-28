@@ -1,0 +1,19 @@
+<a 
+href="#" 
+{{$attributes->merge(['class' => 'rounded-lg p-2 text-white/80 hover:text-white flex items-center'])}} 
+style="background-color:{{$btnEditar}};"
+>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor" 
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="w-6 h-6"
+>
+  <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+  <path d="M13.5 6.5l4 4" />
+</svg>
+Editar</a>
