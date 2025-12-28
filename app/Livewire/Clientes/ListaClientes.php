@@ -35,7 +35,7 @@ class ListaClientes extends Component
     //municipios
     public $municipios = [];
     // modales
-    public $modalCrear = false;
+    public $modalCliente = false;
     public $modalActualizar = false;
     public $modalConfirm = false;
     public $modalConfirmTitle = '';
@@ -56,7 +56,7 @@ class ListaClientes extends Component
             $query->where($this->filtro, 'like', '%' . $this->buscador . '%');
         }
 
-        if($this->modalCrear && empty($this->departamentos)){
+        if($this->modalCliente && empty($this->departamentos)){
             $this->departamentos = Departamento::all();
         }
 
@@ -91,7 +91,35 @@ class ListaClientes extends Component
         $this->form = 'crear';
         $this->modalConfirmTitle = '¿crear cliente?';
         $this->modalConfirmContent = '¿desea crear un nuevo cliente?';
-        $this->modalCrear = true;
+        $this->modalCliente = true;
+    }
+
+    public function editarCliente($id){
+        $this->form = 'editar';
+        $this->modalConfirmTitle = '¿editar cliente?';
+        $this->modalConfirmContent = '¿desea editar el cliente?';
+        $this->editarClienteData($id);
+    }
+
+    public function editarClienteData($id){
+        $cliente = Cliente::findOrFail($id);
+
+        $this->cliente_id = $id;
+
+        $this->fill($cliente->toArray());
+
+        if ($this->id_departamento) {
+            $this->municipios = Municipio::where('departamento_id', $this->id_departamento)->get();
+        }
+
+        $this->referencias = $cliente->referencias->map(function($ref){
+            return [
+                'telefono_ref' => $ref->telefono_ref,
+                'nombre_ref' => $ref->nombre_ref,
+            ];
+        })->toArray();
+
+        $this->modalCliente = true;
     }
 
     public function abrirConfirmacion() 
@@ -99,10 +127,8 @@ class ListaClientes extends Component
         $this->validate([
             'nombres_cliente'   => 'required|string|max:255',
             'apellidos_cliente' => 'required|string|max:255',
-            'dui_cliente'       => 'required|string|max:10|unique:cliente,dui_cliente',
             'telefono_cliente'  => 'required|string|max:15',
             'nit_cliente'       => 'required|string|max:20',
-            'email_cliente'     => 'required|email|max:255|unique:cliente,email_cliente',
             'barrio'            => 'required|string|max:255',
             'referencias'                 => 'required|array|min:1',
             'referencias.*.nombre_ref'    => 'required|string|max:100',
@@ -111,7 +137,7 @@ class ListaClientes extends Component
             'id_municipio'      => 'required|exists:municipio,id',
         ]);
 
-        $this->modalCrear = false;
+        $this->modalCliente = false;
         $this->modalActualizar = false;
 
         $this->modalConfirm = true;
@@ -125,18 +151,17 @@ class ListaClientes extends Component
             $this->modalActualizar = true;
         } else {
 
-            $this->modalCrear = true;
+            $this->modalCliente = true;
         }
     }
 
-    public function create(){
-
+    public function crear(){        
         $validatedData = $this->validate([
         'nombres_cliente'   => 'required|string|max:255',
         'apellidos_cliente' => 'required|string|max:255',
         'dui_cliente'       => 'required|string|max:10|unique:cliente,dui_cliente',
         'telefono_cliente'  => 'required|string|max:15',
-        'nit_cliente'       => 'required|string|max:20',
+        'nit_cliente'       => 'required|string|max:20|unique:cliente,nit_cliente',
         'email_cliente'     => 'required|email|max:255|unique:cliente,email_cliente',
         'barrio'            => 'required|string|max:255',
         'referencias'                 => 'required|array|min:1',
@@ -180,6 +205,54 @@ class ListaClientes extends Component
         $this->dispatch('cliente-guardado');
     }
 
+    public function editar(){
+        
+        $validatedData = $this->validate([
+            'nombres_cliente'   => 'required|string|max:255',
+            'apellidos_cliente' => 'required|string|max:255',
+            'telefono_cliente'  => 'required|string|max:15',
+            'barrio'            => 'required|string|max:255',
+            'referencias'                 => 'required|array|min:1',
+            'referencias.*.nombre_ref'    => 'required|string|max:100',
+            'referencias.*.telefono_ref'  => 'required|string|max:20',
+            'id_departamento'   => 'required|exists:departamento,id',
+            'id_municipio'      => 'required|exists:municipio,id',
+        ]);
+        
+        
+        try{
+            DB::transaction(function(){
+                $cliente = Cliente::findOrFail($this->cliente_id);
+
+                $cliente->update([
+                    'nombres_cliente' => $this->nombres_cliente,
+                    'apellidos_cliente' => $this->apellidos_cliente,
+                    'telefono_cliente' => $this->telefono_cliente,
+                    'barrio' => $this->barrio,
+                    'id_departamento' => $this->id_departamento,
+                    'id_municipio' => $this->id_municipio,
+                ]);
+
+                // Borramos físicamente las referencias antiguas y su relación
+                $cliente->referencias->each->delete();
+                $cliente->referencias()->detach();
+
+                foreach($this->referencias as $ref){
+                    $referencia = Referencia::create([
+                        'telefono_ref' => $ref['telefono_ref'],
+                        'nombre_ref' => $ref['nombre_ref'],
+                    ]);
+                    $cliente->referencias()->attach($referencia->id);
+                }
+
+            });
+            $this->cerrarModal();
+            $this->dispatch('cliente-editado');
+        } catch(\Exception $e){
+            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        }
+    }
+
     public function eliminarCliente($cliente_id){
         $this->modalConfirmTitle = 'eliminar cliente?';
         $this->modalConfirmContent = '¿desea eliminar el cliente?';
@@ -212,7 +285,7 @@ class ListaClientes extends Component
     public function cerrarModal(){
         $this->reset([
             'form',
-            'modalCrear',
+            'modalCliente',
             'modalActualizar',
             'modalConfirm',
             'modalConfirmTitle',

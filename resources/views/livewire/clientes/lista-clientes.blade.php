@@ -7,16 +7,32 @@
     <x-action-message class="mr-3" on="cliente-eliminado">
         {{ __('¡Cliente Eliminado con éxito!') }}
     </x-action-message>
-    {{-- modal crear --}}
-    <x-dialog-modal wire:model.live="modalCrear">
-        <x-slot name="title">
-            {{ __('Nuevo Cliente') }}
-        </x-slot>
+    <x-action-message class="mr-3" on="cliente-editado">
+        {{ __('¡Cliente Editado con éxito!') }}
+    </x-action-message>
+    {{-- modal cliente --}}
+    <x-dialog-modal wire:model.live="modalCliente">
+        @if ($form == 'crear')            
+            <x-slot name="title">
+                {{ __('Nuevo Cliente') }}
+            </x-slot>
+        @else
+            <x-slot name="title">
+                {{ __('Editar Cliente') }}
+            </x-slot>
+        @endif
 
         <x-slot name="content">
-            <form id="form-crear-cliente" wire:submit="create" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="form-{{$form}}-cliente" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <x-form-clientes :departamentos="$departamentos" :municipios="$municipios" :referencias="$referencias"/>
+                <x-form-clientes 
+                    :departamentos="$departamentos" 
+                    :municipios="$municipios" 
+                    :referencias="$referencias" 
+                    :id_departamento="$id_departamento"
+                    :id_municipio="$id_municipio"
+                    :form="$form"
+                    />
 
             </form>
         </x-slot>
@@ -24,10 +40,17 @@
             <x-secondary-button wire:click="cerrarModal">
                 Cancelar
             </x-secondary-button>
+            
+            @if ($form == 'crear')            
+                <x-button wire:click="abrirConfirmacion" class="ml-3">
+                    Guardar Cliente
+                </x-button>
+            @else      
+                <x-button wire:click="abrirConfirmacion" class="ml-3">
+                    Editar Cliente
+                </x-button>
+            @endif
 
-            <x-button wire:click="abrirConfirmacion" class="ml-3">
-                Guardar Cliente
-            </x-button>
         </x-slot>
 
     </x-dialog-modal>
@@ -113,7 +136,7 @@
                     </span>
                 </x-td>
                 <x-td class="flex justify-end gap-2 text-right text-sm font-medium ">
-                    <x-btn-editar wire:click="" />
+                    <x-btn-editar wire:click="editarCliente({{$cliente->id}})" />
                     <x-btn-Eliminar wire:click="eliminarCliente({{$cliente->id}})" />
                     <x-btn-Ver wire:click="show({{$cliente->id}})" />
                 </x-td>
