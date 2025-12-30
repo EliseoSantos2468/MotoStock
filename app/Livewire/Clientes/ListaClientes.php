@@ -147,12 +147,7 @@ class ListaClientes extends Component
 
         $this->modalConfirm = false;
 
-        if ($this->cliente_id) { 
-            $this->modalActualizar = true;
-        } else {
-
-            $this->modalCliente = true;
-        }
+        $this->modalCliente = true;
     }
 
     public function crear(){        
