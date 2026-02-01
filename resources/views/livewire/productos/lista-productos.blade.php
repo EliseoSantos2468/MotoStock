@@ -3,24 +3,29 @@
     <x-action-message class="mr-3" on="producto-eliminado">
     {{ __('Producto Eliminado con éxito!') }}
     </x-action-message>
+    <x-action-message class="mr-3" on="producto-creado">
+    {{ __('Producto Creado con éxito!') }}
+    </x-action-message>
 
     {{-- modal Producto --}}
-    <x-dialog-modal wire:model.live="modalMarca">
+    <x-dialog-modal wire:model.live="modalProducto">
         @if ($form == 'crear')            
             <x-slot name="title">
-                {{ __('Nueva Marca') }}
+                {{ __('Nuevo Producto') }}
             </x-slot>
         @else
             <x-slot name="title">
-                {{ __('Editar Marca') }}
+                {{ __('Editar Producto') }}
             </x-slot>
         @endif
 
         <x-slot name="content">
-            <form id="form-{{$form}}-marca" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="form-{{$form}}-producto" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <x-form-marcas 
+                <x-form-productos 
                     :form="$form"
+                    :marcas="$marcas"
+                    :marcas_nuevas="$marcas_nuevas"
                     />
 
             </form>
@@ -32,11 +37,11 @@
             
             @if ($form == 'crear')            
                 <x-button wire:click="abrirConfirmacion" class="ml-3">
-                    Guardar Cliente
+                    Guardar Producto
                 </x-button>
             @else      
                 <x-button wire:click="abrirConfirmacion" class="ml-3">
-                    Editar Cliente
+                    Editar Producto
                 </x-button>
             @endif
 
@@ -61,7 +66,7 @@
                 </x-secondary-button>
 
                 @if ($form)                    
-                    <x-button type="submit" form="form-{{$form}}-cliente" class="ml-3">
+                    <x-button type="submit" form="form-{{$form}}-producto" class="ml-3">
                         Si
                     </x-button>
                 @else
@@ -94,9 +99,6 @@
             </select>
         </div>
 
-        <x-btn-crear wire:click="crearMarca">
-            Marca
-        </x-btn-crear>
         <x-btn-crear wire:click="crearProducto">
             Producto
         </x-btn-crear>
