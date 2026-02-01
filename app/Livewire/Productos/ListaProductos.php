@@ -158,6 +158,69 @@ class ListaProductos extends Component
         }
     }
 
+    public function editarProducto($id){
+        //recolectar datos
+        $producto = Producto::with('marcas')->findOrFail($id);
+        $this->producto_id = $id;
+        $this->nombre_producto = $producto->nombre_producto;
+        $this->descripcion_producto = $producto->descripcion_producto;
+
+        //recolectar las marcas
+        foreach ($producto->marcas as $marca) {
+            $this->marcas_nuevas[] = [
+                'idMarca'       => $marca->id,
+                'nombreMarca'   => $marca->nombre_marca,
+                'cantidadMarca' => $marca->pivot->cantidad,
+                'PrecioC'       => $marca->pivot->precio_cliente,
+                'PrecioM'       => $marca->pivot->precio_mayoreo,
+            ];
+        }
+
+        $this->form = 'editar';
+        $this->modalConfirmTitle = "Editar Producto?";
+        $this->modalConfirmContent = "¿Desea Editar el Producto?";
+        $this->modalProducto = true;
+    }
+
+    public function editar(){
+        $this->validate([
+            'nombre_producto' => 'required|string|max:255',
+            'descripcion_producto' => 'required|string|max:300',
+            'marcas_nuevas' => 'required|array|min:1',
+            'marcas_nuevas.*.idMarca' => 'required|exists:marca,id',
+            'marcas_nuevas.*.cantidadMarca' => 'required|integer',
+            'marcas_nuevas.*.PrecioC' => 'required|numeric|min:0',
+            'marcas_nuevas.*.PrecioM' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            $producto = Producto::with('marcas')->findOrFail($this->producto_id);
+
+            $producto->update([
+                'nombre_producto' => $this->nombre_producto,
+                'descripcion_producto' => $this->descripcion_producto,
+            ]);
+
+            $pivoteDatos = [];
+
+            foreach($this->marcas_nuevas as $item){
+                $pivoteDatos[$item['idMarca']] = [
+                    'cantidad' => $item['cantidadMarca'],
+                    'precio_cliente' => $item['PrecioC'],
+                    'precio_mayoreo' => $item['PrecioM'],
+                    'venta_producto' => 0
+                ];
+            }
+
+            $producto->marcas()->sync($pivoteDatos);
+
+            $this->cerrarModal();
+            $this->dispatch('producto-actualizado');
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo editar: ' . $e->getMessage());
+        }
+    }
+
     public function agregarMarca(){
         $this->validate([
             'idMarca' => 'required|integer|exists:marca,id',

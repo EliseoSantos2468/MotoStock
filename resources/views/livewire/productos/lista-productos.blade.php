@@ -6,6 +6,9 @@
     <x-action-message class="mr-3" on="producto-creado">
     {{ __('Producto Creado con éxito!') }}
     </x-action-message>
+    <x-action-message class="mr-3" on="producto-actualizado">
+    {{ __('Producto Actualizado con éxito!') }}
+    </x-action-message>
 
     {{-- modal Producto --}}
     <x-dialog-modal wire:model.live="modalProducto">
