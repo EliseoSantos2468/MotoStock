@@ -71,8 +71,23 @@
                 </ul>
             </li>
 
+            <li class="nav-item dropdown-container">
+                <a href="#" class="nav-link dropdown-toggler flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
+                    <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                    <span class="nav-label flex-1">Marcas</span>
+                </a>
+                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: {{$secondaryColor}}">
+                    <li class="nav-item">
+                        <a href="{{route('lista-marcas')}}" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Lista de Marcas</a>
+                    </li>
+                </ul>
+            </li>
+
             <li class="nav-item">
-                <a href="#" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
+                <a href="{{route('lista-productos')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
 
                 <svg
                 class="w-8 h-8 mr-3"

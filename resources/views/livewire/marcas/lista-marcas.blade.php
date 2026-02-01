@@ -1,39 +1,33 @@
 <div>
-
     {{-- modales --}}
-    <x-action-message class="mr-3" on="cliente-guardado">
-        {{ __('¡Cliente guardado con éxito!') }}
+    <x-action-message class="mr-3" on="marca-eliminada">
+    {{ __('Marca Eliminada con éxito!') }}
     </x-action-message>
-    <x-action-message class="mr-3" on="cliente-eliminado">
-        {{ __('¡Cliente Eliminado con éxito!') }}
+    <x-action-message class="mr-3" on="marca-guardada">
+        {{ __('Marca Creada con éxito!') }}
     </x-action-message>
-    <x-action-message class="mr-3" on="cliente-editado">
-        {{ __('¡Cliente Editado con éxito!') }}
+    <x-action-message class="mr-3" on="marca-editada">
+        {{ __('Marca Editada con éxito!') }}
     </x-action-message>
-    {{-- modal cliente --}}
-    <x-dialog-modal wire:model.live="modalCliente">
+
+    {{-- modal Marca --}}
+    <x-dialog-modal wire:model.live="modalMarca">
         @if ($form == 'crear')            
             <x-slot name="title">
-                {{ __('Nuevo Cliente') }}
+                {{ __('Nueva Marca') }}
             </x-slot>
         @else
             <x-slot name="title">
-                {{ __('Editar Cliente') }}
+                {{ __('Editar Marca') }}
             </x-slot>
         @endif
 
         <x-slot name="content">
-            <form id="form-{{$form}}-cliente" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="form-{{$form}}-marca" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <x-form-clientes 
-                    :departamentos="$departamentos" 
-                    :municipios="$municipios" 
-                    :referencias="$referencias" 
-                    :id_departamento="$id_departamento"
-                    :id_municipio="$id_municipio"
+                <x-form-marcas 
                     :form="$form"
                     />
-
             </form>
         </x-slot>
         <x-slot name="footer">
@@ -43,18 +37,18 @@
             
             @if ($form == 'crear')            
                 <x-button wire:click="abrirConfirmacion" class="ml-3">
-                    Guardar Cliente
+                    Guardar Marca
                 </x-button>
             @else      
                 <x-button wire:click="abrirConfirmacion" class="ml-3">
-                    Editar Cliente
+                    Editar Marca
                 </x-button>
             @endif
 
         </x-slot>
 
     </x-dialog-modal>
-    {{-- fin modal cliente --}}
+    {{-- fin modal Marca --}}
 
     {{-- modal confirmacion --}}
         <x-confirmation-modal wire:model.live="modalConfirm">
@@ -72,7 +66,7 @@
                 </x-secondary-button>
 
                 @if ($form)                    
-                    <x-button type="submit" form="form-{{$form}}-cliente" class="ml-3">
+                    <x-button type="submit" form="form-{{$form}}-marca" class="ml-3">
                         Si
                     </x-button>
                 @else
@@ -84,14 +78,9 @@
         </x-confirmation-modal>
     {{-- fin modal confirmacion --}}
 
-
-
-    {{-- fin modales --}}
-
-
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Lista de Clientes') }}
+            {{ __('Lista de Marcas') }}
         </h2>
     </x-slot>
 
@@ -104,15 +93,14 @@
                     name="filtro" 
                     wire:model.live="filtro">
 
-                <option value="nombres_cliente" selected>Nombre</option>
-                <option value="dui_cliente">DUI</option>
+                <option value="nombre_marca" selected>Nombre</option>
                 <option value="id">ID</option>
 
             </select>
         </div>
 
-        <x-btn-crear wire:click="crearCliente">
-            Cliente
+        <x-btn-crear wire:click="crearMarca">
+            Marca
         </x-btn-crear>
     </div>
 
@@ -120,31 +108,23 @@
         <x-slot name="thead">
             <x-th>ID</x-th>
             <x-th>Nombre</x-th>
-            <x-th>DUI</x-th>
-            <x-th>Clasificación</x-th>
             <x-th class="text-right">Acciones</x-th>
         </x-slot>
 
-        @foreach ($clientes as $cliente)
+        @foreach ($marcas as $marca)
             <x-tr>
-                <x-td class="text-sm text-gray-900">{{ $cliente->id }}</x-td>
-                <x-td class="text-sm font-medium text-gray-900">{{ $cliente->nombres_cliente }}</x-td>
-                <x-td class="text-sm text-gray-500">{{ $cliente->dui_cliente }}</x-td>
-                <x-td>
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {{ $cliente->clasificacion->nombre_clasificacion ?? 'Sin Clasificar' }}
-                    </span>
-                </x-td>
-                <x-td class="flex justify-end gap-2 text-right text-sm font-medium ">
-                    <x-btn-editar wire:click="editarCliente({{$cliente->id}})" />
-                    <x-btn-Eliminar wire:click="eliminarCliente({{$cliente->id}})" />
-                    <x-btn-Ver wire:click="show({{$cliente->id}})" />
+                <x-td class="text-sm text-gray-900">{{ $marca->id }}</x-td>
+                <x-td class="text-sm font-medium text-gray-900">{{ $marca->nombre_marca }}</x-td>
+                <x-td class="flex justify-end gap-2 text-right text-sm font-medium">
+                        <x-btn-editar wire:click="editarMarca({{ $marca->id }})" />
+                        <x-btn-Eliminar wire:click="eliminarMarca({{ $marca->id }})" />
                 </x-td>
             </x-tr>
-        @endforeach
+            @endforeach
     </x-table>
 
     <div class="mt-4">
-        {{ $clientes->links() }}
+        {{ $marcas->links() }}
     </div>
+
 </div>
