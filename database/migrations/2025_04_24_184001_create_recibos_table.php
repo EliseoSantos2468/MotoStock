@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->date('fecha');
             $table->decimal('total',8 , 2);
-            $table->unsignedBigInteger('id_cliente');
+            $table->unsignedBigInteger('id_cliente')->nullable();
+            $table->string('email_invitado')->nullable();
             $table->timestamps();
 
             $table->foreign('id_cliente')->references('id')->on('cliente')->onDelete('cascade');

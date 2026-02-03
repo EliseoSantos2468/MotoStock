@@ -5,6 +5,7 @@ use App\Livewire\Clientes\VerClientes;
 use App\Livewire\Marcas\ListaMarcas;
 use App\Livewire\Productos\ListaProductos;
 use App\Livewire\Productos\VerProductos;
+use App\Livewire\Ventas;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,4 +28,6 @@ Route::middleware([
     // inventario
     Route::get('/kardex-inventario', ListaProductos::class)->name('lista-productos');
     Route::get('/productos/{producto}', VerProductos::class)->name('ver-producto');
+    // ventas
+    Route::get('/ventas', Ventas::class)->name('ventas');
 });

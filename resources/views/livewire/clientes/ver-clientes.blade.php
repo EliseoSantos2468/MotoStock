@@ -105,5 +105,33 @@
                 @endforelse
             </div>
         </div>
+        
+        {{-- Seccíon de Recibos --}}
+        <div class="bg-gray-50 p-6 border-t border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 005.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Resibos
+            </h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                @forelse ($cliente->referencias as $referencia)
+                    <div class="bg-white p-4 rounded-md border border-gray-200 shadow-sm flex items-center">
+                        <div class="bg-gray-100 p-2 rounded-full mr-4">
+                            <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">{{ $referencia->nombre_ref }}</p>
+                            <p class="text-sm text-gray-600">{{ $referencia->telefono_ref }}</p>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500 italic col-span-full">Este cliente no posee referencias registradas.</p>
+                @endforelse
+            </div>
+        </div>
     </div>
 </div>

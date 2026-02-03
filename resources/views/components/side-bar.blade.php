@@ -35,7 +35,7 @@
             </li>
         
             <li class="nav-item">
-                <a href="#" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
+                <a href="{{route('ventas')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
                     <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
                         <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
