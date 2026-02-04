@@ -6,11 +6,24 @@ use App\Livewire\Marcas\ListaMarcas;
 use App\Livewire\Productos\ListaProductos;
 use App\Livewire\Productos\VerProductos;
 use App\Livewire\Ventas;
+use App\Models\Recibo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Recibos
+Route::get('/recibo/{id}/pdf', function ($id){
+    $recibo = Recibo::with(['cliente', 'productos'])->findOrFail($id);
+
+    $pdf = Pdf::loadView('pdf.recibo', compact('recibo'));
+
+    $pdf->setPaper([0, 0, 226.77, 800], 'portrait');
+
+    return $pdf->stream("recibo-{$id}.pdf");
+})->name("recibo.pdf");
 
 Route::middleware([
     'auth:sanctum',

@@ -136,14 +136,13 @@ class Ventas extends Component
 
     public function guardarVenta()
     {
-
         if ($this->tipoCliente == 'registrado' && !$this->clienteId) {
             $this->addError('busquedaCliente', 'Seleccione un cliente registrado.');
             return;
         }
 
         try {
-            DB::transaction(function () {
+            $idGenerado = DB::transaction(function () {
                 $recibo = Recibo::create([
                     'fecha'           => now()->format('Y-m-d'),
                     'total'           => $this->totalVenta,
@@ -153,7 +152,8 @@ class Ventas extends Component
 
                 foreach ($this->carrito as $item) {
                     $recibo->productos()->attach($item['producto_id'], [
-                        'cantidad' => $item['cantidad']
+                        'cantidad' => $item['cantidad'],
+                        'precio_unitario' => $item['precio']
                     ]);
 
                     $producto = Producto::find($item['producto_id']);
@@ -175,10 +175,14 @@ class Ventas extends Component
                         ]);
                     }
                 }
+                
+                return $recibo->id;
             });
 
             $this->reset(['carrito', 'totalVenta', 'clienteId', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta']);
             $this->dispatch('venta-realizada');
+            
+            $this->dispatch('abrir-ticket', id: $idGenerado);
 
         } catch (\Exception $e) {
             session()->flash('error', 'Error: ' . $e->getMessage());

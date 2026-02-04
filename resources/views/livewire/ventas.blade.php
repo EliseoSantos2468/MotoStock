@@ -221,4 +221,12 @@
 
         </div>
     </div>
+
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+        @this.on('abrir-ticket', (event) => {
+            window.open('/recibo/' + event.id + '/pdf', '_blank');
+        });
+        });
+    </script>
 </div>
