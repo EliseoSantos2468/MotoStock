@@ -9,6 +9,7 @@ use App\Models\Marca;
 use App\Models\Recibo;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class Ventas extends Component
 {
@@ -136,13 +137,16 @@ class Ventas extends Component
 
     public function guardarVenta()
     {
+        // 1. Validación de cliente (si es modo registrado)
         if ($this->tipoCliente == 'registrado' && !$this->clienteId) {
             $this->addError('busquedaCliente', 'Seleccione un cliente registrado.');
             return;
         }
 
         try {
+            // 2. Ejecución de la transacción en la base de datos
             $idGenerado = DB::transaction(function () {
+                // Crear la cabecera del recibo
                 $recibo = Recibo::create([
                     'fecha'           => now()->format('Y-m-d'),
                     'total'           => $this->totalVenta,
@@ -150,12 +154,15 @@ class Ventas extends Component
                     'email_invitado'  => ($this->tipoCliente == 'invitado') ? $this->emailFacturacion : null,
                 ]);
 
+                // Procesar cada producto del carrito
                 foreach ($this->carrito as $item) {
+                    // Registrar detalle de venta con precio "congelado"
                     $recibo->productos()->attach($item['producto_id'], [
                         'cantidad' => $item['cantidad'],
                         'precio_unitario' => $item['precio']
                     ]);
 
+                    // Actualizar el stock y el contador de ventas en la tabla pivote de marcas
                     $producto = Producto::find($item['producto_id']);
                     $marcaPivot = $producto->marcas()->where('marca_id', $item['marca_id'])->first();
 
@@ -166,6 +173,7 @@ class Ventas extends Component
                         ]);
                     }
 
+                    // Si el cliente está registrado, guardar en su historial de compras
                     if ($this->tipoCliente == 'registrado') {
                         DB::table('cliente_producto')->insert([
                             'cliente_id'  => $this->clienteId,
@@ -176,16 +184,39 @@ class Ventas extends Component
                     }
                 }
                 
+                // Retornar el ID del recibo para el PDF y el correo
                 return $recibo->id;
             });
 
+            // 3. Lógica de envío de correo electrónico
+            // Buscamos el recibo con la relación del cliente cargada
+            $reciboParaEmail = Recibo::with('cliente')->find($idGenerado);
+            $destinatario = null;
+
+            // Determinar el correo según el tipo de cliente
+            if ($this->tipoCliente == 'registrado' && $reciboParaEmail->cliente) {
+                $destinatario = $reciboParaEmail->cliente->email_cliente;
+            } elseif ($this->tipoCliente == 'invitado' && $this->emailFacturacion) {
+                $destinatario = $this->emailFacturacion;
+            }
+
+            // Si existe un correo, enviar el Mailable
+            if ($destinatario) {
+                // Asegúrate de haber creado el mailable EnviarReciboMailable previamente
+                Mail::to($destinatario)->send(new \App\Mail\EnviarReciboMailable($reciboParaEmail));
+            }
+
+            // 4. Limpieza del estado del componente y notificaciones
             $this->reset(['carrito', 'totalVenta', 'clienteId', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta']);
+            
             $this->dispatch('venta-realizada');
             
+            // Emitir evento para abrir el PDF en una nueva pestaña del navegador
             $this->dispatch('abrir-ticket', id: $idGenerado);
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error: ' . $e->getMessage());
+            // En caso de error, mostrar mensaje al usuario
+            session()->flash('error', 'Ocurrió un error al procesar la venta: ' . $e->getMessage());
         }
     }
     public function updatedTipoCliente()
