@@ -87,23 +87,21 @@
         </h2>
     </x-slot>
 
-    <div class="mb-5 flex justify-between">
+    <div class="mb-5 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         
-        <div>
-            <x-input type="text" placeholder="Buscar" wire:model.live="buscador"/>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <x-input type="text" placeholder="Buscar" wire:model.live="buscador" class="w-full sm:w-64"/>
 
-            <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" 
+            <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full sm:w-auto" 
                     name="filtro" 
                     wire:model.live="filtro">
-
-                <option value="nombre_producto" selected>Nombre</option>
+                <option value="nombre_marca" selected>Nombre</option>
                 <option value="id">ID</option>
-
             </select>
         </div>
 
-        <x-btn-crear wire:click="crearProducto">
-            Producto
+        <x-btn-crear wire:click="crearMarca" class="w-full md:w-auto justify-center">
+            Marca
         </x-btn-crear>
     </div>
 

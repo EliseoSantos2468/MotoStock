@@ -1,5 +1,14 @@
-<aside class="sidebar text-white min-h-screen transition-all duration-300" style="background-color: {{$primaryColor}}">
-    <nav class="sidebar-nav py-6 mt-5">
+<aside id="main-sidebar" class="sidebar text-white min-h-screen transition-transform duration-300 fixed z-50 w-64 h-screen overflow-y-auto transform -translate-x-full md:relative md:translate-x-0 m-0" style="background-color: {{$primaryColor}}">
+    
+    <div class="flex justify-end pr-4 pt-4 md:hidden">
+        <button id="close-sidebar-btn" class="text-gray-300 hover:text-white focus:outline-none">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav py-4 md:mt-5">
         <ul class="nav-list primary-nav space-y-2">
             
             <li class="nav-item dropdown-container">
@@ -62,32 +71,20 @@
 
             <li class="nav-item">
                 <a href="{{route('lista-productos')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
-
-                <svg
-                class="w-8 h-8 mr-3"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                >
-                <path d="M5 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path d="M14 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path d="M7 17l5 0" />
-                <path d="M3 17v-6h13v6" />
-                <path d="M5 11v-4h4" />
-                <path d="M9 11v-6h4l3 6" />
-                <path d="M22 15h-3v-10" />
-                <path d="M16 13l3 0" />
+                <svg class="w-8 h-8 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M14 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M7 17l5 0" />
+                    <path d="M3 17v-6h13v6" />
+                    <path d="M5 11v-4h4" />
+                    <path d="M9 11v-6h4l3 6" />
+                    <path d="M22 15h-3v-10" />
+                    <path d="M16 13l3 0" />
                 </svg>
-
                     <span class="nav-label">Kardex e Inventario</span>
                 </a>
             </li>
         </ul>
-
 
         <ul class="nav-list secondary-nav mt-10 pt-10 border-t border-gray-800 space-y-2">
             <li class="nav-item">
@@ -125,4 +122,3 @@
 </aside>
 
 <script src="{{asset('js/sidebar.js')}}"></script>
-            

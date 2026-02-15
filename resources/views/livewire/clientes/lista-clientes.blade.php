@@ -95,23 +95,21 @@
         </h2>
     </x-slot>
 
-    <div class="mb-5 flex justify-between">
-        
-        <div>
-            <x-input type="text" placeholder="Buscar" wire:model.live="buscador"/>
+<div class="mb-5 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+    
+    <div class="flex flex-col sm:flex-row gap-2">
+        <x-input type="text" placeholder="Buscar" wire:model.live="buscador" class="w-full sm:w-64"/>
 
-            <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" 
+            <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full sm:w-auto" 
                     name="filtro" 
                     wire:model.live="filtro">
-
                 <option value="nombres_cliente" selected>Nombre</option>
                 <option value="dui_cliente">DUI</option>
                 <option value="id">ID</option>
-
             </select>
         </div>
 
-        <x-btn-crear wire:click="crearCliente">
+        <x-btn-crear wire:click="crearCliente" class="w-full md:w-auto justify-center">
             Cliente
         </x-btn-crear>
     </div>

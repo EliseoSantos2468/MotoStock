@@ -17,36 +17,36 @@
         <!-- Styles -->
         @livewireStyles
     </head>
+    
     <body class="font-sans antialiased">
         <x-banner />
-
-    <div class="min-h-screen bg-gray-100 grid grid-cols-[280px_1fr]">
         
-
-        <x-side-bar />
-
-
-        <div class="flex flex-col">
+        <div class="min-h-screen bg-gray-100 flex flex-col md:grid md:grid-cols-[256px_1fr]">
             
-            @livewire('navigation-menu')
+            <x-side-bar />
 
-            <main class="p-8 flex-1">
+            <div class="flex flex-col w-full h-screen overflow-x-hidden relative">
                 
-                @if (isset($header))
-                    <div class="mb-8">
-                        {{ $header }}
-                    </div>
-                @endif
+                <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden transition-opacity"></div>
 
-                <div class="bg-white shadow-sm rounded-lg p-6">
-                    {{ $slot }}
-                </div>
-            </main>
+                @livewire('navigation-menu')
+                
+                <main class="p-8 flex-1">
+                    
+                    @if (isset($header))
+                        <div class="mb-8">
+                            {{ $header }}
+                        </div>
+                    @endif
+
+                    <div class="bg-white shadow-sm rounded-lg p-6">
+                        {{ $slot }}
+                    </div>
+                </main>
+            </div>
         </div>
-    </div>
 
         @stack('modals')
-
         @livewireScripts
     </body>
 </html>
