@@ -1,5 +1,14 @@
-<aside class="sidebar text-white min-h-screen transition-all duration-300" style="background-color: {{$primaryColor}}">
-    <nav class="sidebar-nav py-6 mt-5">
+<aside id="main-sidebar" class="sidebar text-white min-h-screen transition-transform duration-300 fixed z-50 w-64 h-screen overflow-y-auto transform -translate-x-full md:relative md:translate-x-0 m-0" style="background-color: {{$primaryColor}}">
+    
+    <div class="flex justify-end pr-4 pt-4 md:hidden">
+        <button id="close-sidebar-btn" class="text-gray-300 hover:text-white focus:outline-none">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav py-4 md:mt-5">
         <ul class="nav-list primary-nav space-y-2">
             
             <li class="nav-item dropdown-container">
@@ -47,32 +56,6 @@
 
             <li class="nav-item dropdown-container">
                 <a href="#" class="nav-link dropdown-toggler flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
-                <svg
-                class="w-8 h-8 mr-3"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                >
-                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
-                <path d="M9 17h6" />
-                <path d="M9 13h6" />
-                </svg>
-                    <span class="nav-label flex-1">Creditos</span>
-                </a>
-                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: {{$secondaryColor}}">
-                    <li class="nav-item">
-                        <a href="#" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Creditos</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="nav-item dropdown-container">
-                <a href="#" class="nav-link dropdown-toggler flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
                     <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
                         <line x1="7" y1="7" x2="7.01" y2="7"></line>
@@ -88,34 +71,31 @@
 
             <li class="nav-item">
                 <a href="{{route('lista-productos')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
-
-                <svg
-                class="w-8 h-8 mr-3"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                >
-                <path d="M5 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path d="M14 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                <path d="M7 17l5 0" />
-                <path d="M3 17v-6h13v6" />
-                <path d="M5 11v-4h4" />
-                <path d="M9 11v-6h4l3 6" />
-                <path d="M22 15h-3v-10" />
-                <path d="M16 13l3 0" />
+                <svg class="w-8 h-8 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M14 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                    <path d="M7 17l5 0" />
+                    <path d="M3 17v-6h13v6" />
+                    <path d="M5 11v-4h4" />
+                    <path d="M9 11v-6h4l3 6" />
+                    <path d="M22 15h-3v-10" />
+                    <path d="M16 13l3 0" />
                 </svg>
-
                     <span class="nav-label">Kardex e Inventario</span>
                 </a>
             </li>
         </ul>
 
-
         <ul class="nav-list secondary-nav mt-10 pt-10 border-t border-gray-800 space-y-2">
+            <li class="nav-item">
+                <a href="{{ route('configuracion') }}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
+                    <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span class="nav-label">Configuración</span>
+                </a>
+            </li>
              <li class="nav-item">
                 <a href="#" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
                     <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -142,4 +122,3 @@
 </aside>
 
 <script src="{{asset('js/sidebar.js')}}"></script>
-            

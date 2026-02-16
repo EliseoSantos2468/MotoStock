@@ -2,6 +2,7 @@
 
 use App\Livewire\Clientes\ListaClientes;
 use App\Livewire\Clientes\VerClientes;
+use App\Livewire\Configuracion\Ajustes;
 use App\Livewire\Marcas\ListaMarcas;
 use App\Livewire\Productos\ListaProductos;
 use App\Livewire\Productos\VerProductos;
@@ -43,4 +44,6 @@ Route::middleware([
     Route::get('/productos/{producto}', VerProductos::class)->name('ver-producto');
     // ventas
     Route::get('/ventas', Ventas::class)->name('ventas');
+    // configuracion
+    Route::get('/configuracion', Ajustes::class)->name('configuracion');
 });
