@@ -1,5 +1,9 @@
 <div>
-
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Lista de Clientes') }}
+        </h2>
+    </x-slot>
     {{-- modales --}}
     <x-action-message class="mr-3" on="cliente-guardado">
         {{ __('¡Cliente guardado con éxito!') }}
@@ -89,16 +93,10 @@
     {{-- fin modales --}}
 
 
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Lista de Clientes') }}
-        </h2>
-    </x-slot>
-
-<div class="mb-5 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
-    
-    <div class="flex flex-col sm:flex-row gap-2">
-        <x-input type="text" placeholder="Buscar" wire:model.live="buscador" class="w-full sm:w-64"/>
+    <div class="mb-5 flex justify-between">
+        
+        <div>
+            <x-input type="text" placeholder="Buscar" wire:model.live="buscador"/>
 
             <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full sm:w-auto" 
                     name="filtro" 

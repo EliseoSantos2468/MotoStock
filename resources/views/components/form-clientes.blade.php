@@ -10,36 +10,43 @@
 <div>
     <x-label for="nombres" value="Nombres" />
     <x-input id="nombres" type="text" class="mt-1 block w-full" placeholder="ingrese nombres" wire:model="nombres_cliente" />
+    <x-input-error for="nombres_cliente" class="mt-2" />
 </div>
 
 <div>
     <x-label for="apellidos" value="Apellidos" />
     <x-input id="apellidos" type="text" class="mt-1 block w-full" placeholder="ingrese apellidos" wire:model="apellidos_cliente" />
+    <x-input-error for="apellidos_cliente" class="mt-2" />
 </div>
 
 <div class="{{ $form == 'editar' ? 'hidden' : '' }}">
     <x-label for="dui" value="DUI" />
-    <x-input id="dui" type="text" class="mt-1 block w-full" placeholder="00000000-0" wire:model="dui_cliente"/>
+    <x-input id="dui" type="text" class="mt-1 block w-full" placeholder="00000000-0" inputmode="numeric" pattern="\d{8}-\d" wire:model="dui_cliente"/>
+    <x-input-error for="dui_cliente" class="mt-2" />
 </div>
 
 <div>
     <x-label for="telefono" value="Telefono" />
-    <x-input id="telefono" type="text" class="mt-1 block w-full" placeholder="7777-7777" wire:model="telefono_cliente" />
+    <x-input id="telefono" type="text" class="mt-1 block w-full" placeholder="7777-7777" inputmode="numeric" pattern="\d{8,15}" wire:model="telefono_cliente" />
+    <x-input-error for="telefono_cliente" class="mt-2" />
 </div>
 
 <div class="{{ $form == 'editar' ? 'hidden' : '' }}">
     <x-label for="nit" value="Nit" />
-    <x-input id="nit" type="number" class="mt-1 block w-full" placeholder="ingrese nit" wire:model="nit_cliente" />
+    <x-input id="nit" type="text" class="mt-1 block w-full" placeholder="0000-000000-000" inputmode="numeric" pattern="\d{4}-\d{6}-\d{3}" wire:model="nit_cliente" />
+    <x-input-error for="nit_cliente" class="mt-2" />
 </div>
 
 <div class="{{ $form == 'editar' ? 'hidden' : '' }}">
     <x-label for="correo" value="Correo" />
     <x-input id="correo" type="email" class="mt-1 block w-full" placeholder="ingrese correo" wire:model="email_cliente" />
+    <x-input-error for="email_cliente" class="mt-2" />
 </div>
 
 <div>
     <x-label for="barrio" value="Barrio" />
     <x-input id="barrio" type="text" class="mt-1 block w-full" placeholder="ingrese direccion" wire:model="barrio" />
+    <x-input-error for="barrio" class="mt-2" />
 </div>
 
 <div>
@@ -52,6 +59,7 @@
             </option>
         @endforeach
     </select>
+    <x-input-error for="id_departamento" class="mt-2" />
 </div>
 
 <div class="md:col-span-2">
@@ -64,13 +72,14 @@
             </option>
         @endforeach
     </select>
+    <x-input-error for="id_municipio" class="mt-2" />
 </div>
 
 <div class="md:col-span-2">
     <x-label for="referencias" value="Referencias" />
     <div id="referencias" class="flex gap-2 justify-between">
         <x-input wire:model="ref_nombre" type="text" name="" id="" placeholder="Nombre referencia" class="w-full"/>
-        <x-input wire:model="ref_telefono" type="number" name="" id="" placeholder="Telefono referencia" class="w-full"/>
+        <x-input wire:model="ref_telefono" type="text" name="" id="" placeholder="Telefono referencia" inputmode="numeric" pattern="\d{8,15}" class="w-full"/>
         <a href="" wire:click.prevent='agregarReferencia' class="bg-red-500 items-center text-white/80 hover:text-white rounded-full">
             <svg
             class="w-10 h-10"
@@ -87,6 +96,8 @@
             </svg>
         </a>
     </div>
+    <x-input-error for="ref_nombre" class="mt-2" />
+    <x-input-error for="ref_telefono" class="mt-2" />
 </div>
 
 <div class="md:col-span-2 flex flex-col gap-2 ">

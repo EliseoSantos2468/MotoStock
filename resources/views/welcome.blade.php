@@ -59,10 +59,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
                 </a>
-                
-                <a href="https://tu-documentacion.com" target="_blank" class="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors px-6 py-4">
-                    Explorar Guía de Inicio
-                </a>
             </div>
 
             <footer class="mt-24 pt-8 border-t border-slate-100">

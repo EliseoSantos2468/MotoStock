@@ -14,6 +14,48 @@ use Livewire\Attributes\Layout;
 class ListaClientes extends Component
 {
     use WithPagination;
+
+    protected $messages = [
+        'nombres_cliente.required' => 'El campo nombres es obligatorio.',
+        'nombres_cliente.regex' => 'El campo nombres solo debe contener letras y espacios.',
+        'apellidos_cliente.required' => 'El campo apellidos es obligatorio.',
+        'apellidos_cliente.regex' => 'El campo apellidos solo debe contener letras y espacios.',
+        'dui_cliente.required' => 'El campo DUI es obligatorio.',
+        'dui_cliente.regex' => 'El DUI debe tener el formato 00000000-0.',
+        'dui_cliente.unique' => 'El DUI ya esta registrado.',
+        'nit_cliente.required' => 'El campo NIT es obligatorio.',
+        'nit_cliente.regex' => 'El NIT debe tener el formato 0000-000000-000.',
+        'nit_cliente.unique' => 'El NIT ya esta registrado.',
+        'telefono_cliente.required' => 'El campo telefono es obligatorio.',
+        'telefono_cliente.regex' => 'El telefono debe tener el formato 7777-7777.',
+        'email_cliente.required' => 'El campo correo es obligatorio.',
+        'email_cliente.email' => 'El correo no tiene un formato valido.',
+        'email_cliente.unique' => 'El correo ya esta registrado.',
+        'barrio.required' => 'El campo barrio es obligatorio.',
+        'referencias.required' => 'Debe agregar al menos una referencia.',
+        'referencias.*.nombre_ref.required' => 'El nombre de la referencia es obligatorio.',
+        'referencias.*.nombre_ref.regex' => 'El nombre de referencia solo debe contener letras y espacios.',
+        'referencias.*.telefono_ref.required' => 'El telefono de la referencia es obligatorio.',
+        'referencias.*.telefono_ref.regex' => 'El telefono de la referencia debe tener el formato 7777-7777.',
+        'id_departamento.required' => 'Debe seleccionar un departamento.',
+        'id_departamento.exists' => 'El departamento seleccionado no es valido.',
+        'id_municipio.required' => 'Debe seleccionar un municipio.',
+        'id_municipio.exists' => 'El municipio seleccionado no es valido.',
+    ];
+
+    protected $validationAttributes = [
+        'nombres_cliente' => 'nombres',
+        'apellidos_cliente' => 'apellidos',
+        'dui_cliente' => 'DUI',
+        'nit_cliente' => 'NIT',
+        'telefono_cliente' => 'telefono',
+        'email_cliente' => 'correo',
+        'barrio' => 'barrio',
+        'referencias.*.nombre_ref' => 'nombre de referencia',
+        'referencias.*.telefono_ref' => 'telefono de referencia',
+        'id_departamento' => 'departamento',
+        'id_municipio' => 'municipio',
+    ];
     // buscador
     public $filtro = 'nombres_cliente';
     public $buscador = '';
@@ -67,8 +109,8 @@ class ListaClientes extends Component
 
     public function agregarReferencia(){
         $this->validate([
-            'ref_nombre' => 'required|string|max:100',
-            'ref_telefono' => 'required|string|max:20',
+            'ref_nombre' => 'required|string|max:100|regex:/^[\pL\s]+$/u',
+            'ref_telefono' => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
         ]);
 
         $this->referencias[] = [
@@ -124,18 +166,25 @@ class ListaClientes extends Component
 
     public function abrirConfirmacion() 
     {
-        $this->validate([
-            'nombres_cliente'   => 'required|string|max:255',
-            'apellidos_cliente' => 'required|string|max:255',
-            'telefono_cliente'  => 'required|string|max:15',
-            'nit_cliente'       => 'required|string|max:20',
+        $rules = [
+            'nombres_cliente'   => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+            'apellidos_cliente' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+                'telefono_cliente'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
             'barrio'            => 'required|string|max:255',
             'referencias'                 => 'required|array|min:1',
-            'referencias.*.nombre_ref'    => 'required|string|max:100',
-            'referencias.*.telefono_ref'  => 'required|string|max:20',
+            'referencias.*.nombre_ref'    => 'required|string|max:100|regex:/^[\pL\s]+$/u',
+                'referencias.*.telefono_ref'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
             'id_departamento'   => 'required|exists:departamento,id',
             'id_municipio'      => 'required|exists:municipio,id',
-        ]);
+        ];
+
+        if ($this->form === 'crear') {
+            $rules['dui_cliente'] = 'required|string|max:10|regex:/^\d{8}-\d$/|unique:cliente,dui_cliente';
+            $rules['nit_cliente'] = 'required|string|max:20|regex:/^\d{4}-\d{6}-\d{3}$/|unique:cliente,nit_cliente';
+            $rules['email_cliente'] = 'required|email|max:255|unique:cliente,email_cliente';
+        }
+
+        $this->validate($rules);
 
         $this->modalCliente = false;
         $this->modalActualizar = false;
@@ -152,16 +201,16 @@ class ListaClientes extends Component
 
     public function crear(){        
         $validatedData = $this->validate([
-        'nombres_cliente'   => 'required|string|max:255',
-        'apellidos_cliente' => 'required|string|max:255',
-        'dui_cliente'       => 'required|string|max:10|unique:cliente,dui_cliente',
-        'telefono_cliente'  => 'required|string|max:15',
-        'nit_cliente'       => 'required|string|max:20|unique:cliente,nit_cliente',
+        'nombres_cliente'   => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+        'apellidos_cliente' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+        'dui_cliente'       => 'required|string|max:10|regex:/^\d{8}-\d$/|unique:cliente,dui_cliente',
+                'telefono_cliente'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
+        'nit_cliente'       => 'required|string|max:20|regex:/^\d{4}-\d{6}-\d{3}$/|unique:cliente,nit_cliente',
         'email_cliente'     => 'required|email|max:255|unique:cliente,email_cliente',
         'barrio'            => 'required|string|max:255',
         'referencias'                 => 'required|array|min:1',
-        'referencias.*.nombre_ref'    => 'required|string|max:100',
-        'referencias.*.telefono_ref'  => 'required|string|max:20',
+        'referencias.*.nombre_ref'    => 'required|string|max:100|regex:/^[\pL\s]+$/u',
+                'referencias.*.telefono_ref'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
         'id_departamento'   => 'required|exists:departamento,id',
         'id_municipio'      => 'required|exists:municipio,id',
         ]);
@@ -203,13 +252,13 @@ class ListaClientes extends Component
     public function editar(){
         
         $validatedData = $this->validate([
-            'nombres_cliente'   => 'required|string|max:255',
-            'apellidos_cliente' => 'required|string|max:255',
-            'telefono_cliente'  => 'required|string|max:15',
+            'nombres_cliente'   => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+            'apellidos_cliente' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
+                'telefono_cliente'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
             'barrio'            => 'required|string|max:255',
             'referencias'                 => 'required|array|min:1',
-            'referencias.*.nombre_ref'    => 'required|string|max:100',
-            'referencias.*.telefono_ref'  => 'required|string|max:20',
+            'referencias.*.nombre_ref'    => 'required|string|max:100|regex:/^[\pL\s]+$/u',
+                'referencias.*.telefono_ref'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
             'id_departamento'   => 'required|exists:departamento,id',
             'id_municipio'      => 'required|exists:municipio,id',
         ]);

@@ -12,7 +12,7 @@
         <ul class="nav-list primary-nav space-y-2">
             
             <li class="nav-item dropdown-container">
-                <a href="#" class="nav-link dropdown-toggler flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
+                <a href="{{ route('dashboard') }}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
                     <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 4a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-12z" />
                         <path d="M3 13h18" /> <path d="M8 21h8" /> <path d="M10 17l-.5 4" /> <path d="M14 17l.5 4" />
@@ -21,7 +21,7 @@
                 </a>
                 <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: {{$secondaryColor}}">
                     <li class="nav-item">
-                        <a href="#" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Ver Resumen</a>
+                        <a href="{{ route('dashboard') }}" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Ver Resumen</a>
                     </li>
                 </ul>
             </li>

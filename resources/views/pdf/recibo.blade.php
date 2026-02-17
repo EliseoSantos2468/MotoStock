@@ -12,7 +12,7 @@
 </head>
 <body>
     <div class="header">
-        <strong>MI NEGOCIO S.A. DE C.V.</strong><br>
+        <strong>MOTO STOCK.</strong><br>
         San Miguel, El Salvador<br>
         NIT: 0000-000000-000-0
     </div>
