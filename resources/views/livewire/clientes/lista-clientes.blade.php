@@ -15,7 +15,7 @@
         {{ __('¡Cliente Editado con éxito!') }}
     </x-action-message>
     {{-- modal cliente --}}
-    <x-dialog-modal wire:model.live="modalCliente">
+    <x-dialog-modal wire:model.live="modalCliente" maxWidth="4xl">
         @if ($form == 'crear')            
             <x-slot name="title">
                 {{ __('Nuevo Cliente') }}
@@ -27,12 +27,11 @@
         @endif
 
         <x-slot name="content">
-            <form id="form-{{$form}}-cliente" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="form-{{$form}}-cliente" wire:submit.prevent="{{$form}}" class="mx-auto w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <x-form-clientes 
                     :departamentos="$departamentos" 
                     :municipios="$municipios" 
-                    :referencias="$referencias" 
                     :id_departamento="$id_departamento"
                     :id_municipio="$id_municipio"
                     :form="$form"
@@ -76,11 +75,11 @@
                 </x-secondary-button>
 
                 @if ($form)                    
-                    <x-button type="submit" form="form-{{$form}}-cliente" class="ml-3">
+                    <x-button type="button" wire:click="{{$form}}" class="ml-3">
                         Si
                     </x-button>
                 @else
-                    <x-button type="submit" wire:click="delete" class="ml-3">
+                    <x-button type="button" wire:click="delete" class="ml-3">
                         Si
                     </x-button>
                 @endif

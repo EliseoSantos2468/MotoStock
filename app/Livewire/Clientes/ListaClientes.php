@@ -5,8 +5,8 @@ namespace App\Livewire\Clientes;
 use App\Models\Cliente;
 use App\Models\Departamento;
 use App\Models\Municipio;
-use App\Models\Referencia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
@@ -15,6 +15,7 @@ class ListaClientes extends Component
 {
     use WithPagination;
 
+    // Mensajes de validación personalizados
     protected $messages = [
         'nombres_cliente.required' => 'El campo nombres es obligatorio.',
         'nombres_cliente.regex' => 'El campo nombres solo debe contener letras y espacios.',
@@ -22,71 +23,70 @@ class ListaClientes extends Component
         'apellidos_cliente.regex' => 'El campo apellidos solo debe contener letras y espacios.',
         'dui_cliente.required' => 'El campo DUI es obligatorio.',
         'dui_cliente.regex' => 'El DUI debe tener el formato 00000000-0.',
-        'dui_cliente.unique' => 'El DUI ya esta registrado.',
+        'dui_cliente.unique' => 'El DUI ya está registrado.',
         'nit_cliente.required' => 'El campo NIT es obligatorio.',
-        'nit_cliente.regex' => 'El NIT debe tener el formato 0000-000000-000.',
-        'nit_cliente.unique' => 'El NIT ya esta registrado.',
-        'telefono_cliente.required' => 'El campo telefono es obligatorio.',
-        'telefono_cliente.regex' => 'El telefono debe tener el formato 7777-7777.',
+        'nit_cliente.regex' => 'El NIT debe tener el formato 0000-000000-000-0.',
+        'telefono_cliente.required' => 'El campo teléfono es obligatorio.',
+        'telefono_cliente.regex' => 'El teléfono debe tener el formato 0000-0000.',
         'email_cliente.required' => 'El campo correo es obligatorio.',
-        'email_cliente.email' => 'El correo no tiene un formato valido.',
-        'email_cliente.unique' => 'El correo ya esta registrado.',
+        'email_cliente.email' => 'El correo no tiene un formato válido.',
+        'email_cliente.unique' => 'El correo ya está registrado.',
         'barrio.required' => 'El campo barrio es obligatorio.',
-        'referencias.required' => 'Debe agregar al menos una referencia.',
-        'referencias.*.nombre_ref.required' => 'El nombre de la referencia es obligatorio.',
-        'referencias.*.nombre_ref.regex' => 'El nombre de referencia solo debe contener letras y espacios.',
-        'referencias.*.telefono_ref.required' => 'El telefono de la referencia es obligatorio.',
-        'referencias.*.telefono_ref.regex' => 'El telefono de la referencia debe tener el formato 7777-7777.',
-        'id_departamento.required' => 'Debe seleccionar un departamento.',
-        'id_departamento.exists' => 'El departamento seleccionado no es valido.',
-        'id_municipio.required' => 'Debe seleccionar un municipio.',
-        'id_municipio.exists' => 'El municipio seleccionado no es valido.',
     ];
 
-    protected $validationAttributes = [
-        'nombres_cliente' => 'nombres',
-        'apellidos_cliente' => 'apellidos',
-        'dui_cliente' => 'DUI',
-        'nit_cliente' => 'NIT',
-        'telefono_cliente' => 'telefono',
-        'email_cliente' => 'correo',
-        'barrio' => 'barrio',
-        'referencias.*.nombre_ref' => 'nombre de referencia',
-        'referencias.*.telefono_ref' => 'telefono de referencia',
-        'id_departamento' => 'departamento',
-        'id_municipio' => 'municipio',
-    ];
     // buscador
     public $filtro = 'nombres_cliente';
     public $buscador = '';
-    //datos de clientes
+    
+    // datos de clientes
     public $cliente_id;
-    public $nombres_cliente;
-    public $apellidos_cliente;
-    public $dui_cliente;
-    public $telefono_cliente;
-    public $nit_cliente;
-    public $email_cliente;
-    public $barrio;
-    public $id_departamento = '';
-    public $id_municipio = '';
-    public $referencias = [];
-    public $ref_nombre, $ref_telefono;
-    //departamentos
-    public $departamentos = [];
-    //municipios
-    public $municipios = [];
-    // modales
-    public $modalCliente = false;
-    public $modalActualizar = false;
-    public $modalConfirm = false;
-    public $modalConfirmTitle = '';
-    public $modalConfirmContent = '';
-    //logica
-    public $form = '';
+    public $nombres_cliente, $apellidos_cliente, $dui_cliente, $telefono_cliente;
+    public $nit_cliente, $email_cliente, $barrio;
+    public $id_departamento = '', $id_municipio = '';
 
-    public function updatedIdDepartamento($value){
+    // colecciones
+    public $departamentos = [], $municipios = [];
+
+    // modales y lógica
+    public $modalCliente = false, $modalActualizar = false, $modalConfirm = false;
+    public $modalConfirmTitle = '', $modalConfirmContent = '', $form = '';
+
+    /**
+     * Reglas dinámicas según el estado (Crear/Editar)
+     */
+    private function reglas($id = null): array
+    {
+        $rules = [
+            'nombres_cliente'   => 'required|max:255|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
+            'apellidos_cliente' => 'required|max:255|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
+            'telefono_cliente'  => 'required|regex:/^\d{4}-\d{4}$/',
+            'barrio'            => 'required|string|max:255',
+            'id_departamento'   => 'required|exists:departamento,id',
+            'id_municipio'      => 'required|exists:municipio,id',
+        ];
+
+        // DUI Validation (Solo si es nuevo o si decides permitir edición)
+        $duiRule = ['required', 'regex:/^\d{8}-?\d{1}$/'];
+        $duiDigits = preg_replace('/\D+/', '', (string) $this->dui_cliente);
+        if ($duiDigits !== '000000000') {
+            $duiRule[] = Rule::unique('cliente', 'dui_cliente')->ignore($id);
+        }
+        $rules['dui_cliente'] = $duiRule;
+
+        // NIT Validation
+        $nitRule = ['required', 'regex:/^\d{4}-\d{6}-\d{3}-\d{1}$/'];
+        $rules['nit_cliente'] = $nitRule;
+
+        // Email Validation
+        $rules['email_cliente'] = ['required', 'email'];
+
+        return $rules;
+    }
+
+    public function updatedIdDepartamento($value)
+    {
         $this->municipios = Municipio::where('departamento_id', $value)->get();
+        $this->id_municipio = '';
     }
 
     #[Layout('layouts.app')]
@@ -94,7 +94,7 @@ class ListaClientes extends Component
     {
         $query = Cliente::with(['clasificacion', 'referencias']);
 
-        if ($this->filtro && $this->buscador != '') {
+        if ($this->buscador != '') {
             $query->where($this->filtro, 'like', '%' . $this->buscador . '%');
         }
 
@@ -102,252 +102,133 @@ class ListaClientes extends Component
             $this->departamentos = Departamento::all();
         }
 
-        $clientes = $query->paginate(10);   
-
-        return view('livewire.clientes.lista-clientes', compact('clientes'));
-    }
-
-    public function agregarReferencia(){
-        $this->validate([
-            'ref_nombre' => 'required|string|max:100|regex:/^[\pL\s]+$/u',
-            'ref_telefono' => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
-        ]);
-
-        $this->referencias[] = [
-            'nombre_ref' => $this->ref_nombre,
-            'telefono_ref' => $this->ref_telefono,
-        ];
-
-        $this->reset([
-            'ref_nombre',
-            'ref_telefono',
+        return view('livewire.clientes.lista-clientes', [
+            'clientes' => $query->paginate(10)
         ]);
     }
 
-    public function eliminarReferencia($index){
-        unset($this->referencias[$index]);
-        $this->referencias = array_values($this->referencias);
+
+    public function abrirConfirmacion() 
+    {
+        // Validamos con las reglas correspondientes al formulario actual
+        $this->validate($this->reglas($this->cliente_id));
+
+        $this->modalCliente = false;
+        $this->modalConfirm = true;
     }
 
-    public function crearCliente(){
+    public function crear() 
+    {        
+        $this->validate($this->reglas());
+        
+        try {
+            DB::transaction(function() {
+                $cliente = Cliente::create([
+                    'nombres_cliente'   => $this->nombres_cliente,
+                    'apellidos_cliente' => $this->apellidos_cliente,
+                    'dui_cliente'       => $this->dui_cliente,
+                    'telefono_cliente'  => $this->telefono_cliente,
+                    'nit_cliente'       => $this->nit_cliente,
+                    'email_cliente'     => $this->email_cliente,
+                    'monto_max'         => 1000.00,
+                    'id_clasificacion'  => 3,
+                    'barrio'            => $this->barrio,
+                    'id_departamento'   => $this->id_departamento,
+                    'id_municipio'      => $this->id_municipio,
+                ]);
+
+            });
+
+            $this->cerrarModal();
+            $this->dispatch('cliente-guardado');
+        } catch(\Exception $e) {
+            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        }
+    }
+
+    public function editar() 
+    {
+        $this->validate($this->reglas($this->cliente_id));
+        
+        try {
+            DB::transaction(function() {
+                $cliente = Cliente::findOrFail($this->cliente_id);
+                $cliente->update([
+                    'nombres_cliente'   => $this->nombres_cliente,
+                    'apellidos_cliente' => $this->apellidos_cliente,
+                    'telefono_cliente'  => $this->telefono_cliente,
+                    'barrio'            => $this->barrio,
+                    'id_departamento'   => $this->id_departamento,
+                    'id_municipio'      => $this->id_municipio,
+                ]);
+
+            });
+            
+            $this->cerrarModal();
+            $this->dispatch('cliente-editado');
+        } catch(\Exception $e) {
+            session()->flash('error', 'Error al actualizar: ' . $e->getMessage());
+        }
+    }
+
+    // --- Métodos de apertura y cierre ---
+
+    public function crearCliente() {
+        $this->resetValidation();
+        $this->cerrarModal();
         $this->form = 'crear';
-        $this->modalConfirmTitle = '¿crear cliente?';
-        $this->modalConfirmContent = '¿desea crear un nuevo cliente?';
+        $this->modalConfirmTitle = '¿Crear cliente?';
+        $this->modalConfirmContent = '¿Desea crear un nuevo registro de cliente?';
         $this->modalCliente = true;
     }
 
-    public function editarCliente($id){
+    public function editarCliente($id) {
+        $this->resetValidation();
         $this->form = 'editar';
-        $this->modalConfirmTitle = '¿editar cliente?';
-        $this->modalConfirmContent = '¿desea editar el cliente?';
+        $this->modalConfirmTitle = '¿Editar cliente?';
+        $this->modalConfirmContent = '¿Desea guardar los cambios realizados?';
         $this->editarClienteData($id);
     }
 
-    public function editarClienteData($id){
+    public function editarClienteData($id) {
         $cliente = Cliente::findOrFail($id);
-
         $this->cliente_id = $id;
-
         $this->fill($cliente->toArray());
 
         if ($this->id_departamento) {
             $this->municipios = Municipio::where('departamento_id', $this->id_departamento)->get();
         }
 
-        $this->referencias = $cliente->referencias->map(function($ref){
-            return [
-                'telefono_ref' => $ref->telefono_ref,
-                'nombre_ref' => $ref->nombre_ref,
-            ];
-        })->toArray();
-
         $this->modalCliente = true;
     }
 
-    public function abrirConfirmacion() 
-    {
-        $rules = [
-            'nombres_cliente'   => 'required|string|max:255|regex:/^[\pL\s]+$/u',
-            'apellidos_cliente' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
-                'telefono_cliente'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
-            'barrio'            => 'required|string|max:255',
-            'referencias'                 => 'required|array|min:1',
-            'referencias.*.nombre_ref'    => 'required|string|max:100|regex:/^[\pL\s]+$/u',
-                'referencias.*.telefono_ref'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
-            'id_departamento'   => 'required|exists:departamento,id',
-            'id_municipio'      => 'required|exists:municipio,id',
-        ];
-
-        if ($this->form === 'crear') {
-            $rules['dui_cliente'] = 'required|string|max:10|regex:/^\d{8}-\d$/|unique:cliente,dui_cliente';
-            $rules['nit_cliente'] = 'required|string|max:20|regex:/^\d{4}-\d{6}-\d{3}$/|unique:cliente,nit_cliente';
-            $rules['email_cliente'] = 'required|email|max:255|unique:cliente,email_cliente';
-        }
-
-        $this->validate($rules);
-
-        $this->modalCliente = false;
-        $this->modalActualizar = false;
-
-        $this->modalConfirm = true;
-    }
-
-    public function cerrarConfirmacion(){
-
-        $this->modalConfirm = false;
-
-        $this->modalCliente = true;
-    }
-
-    public function crear(){        
-        $validatedData = $this->validate([
-        'nombres_cliente'   => 'required|string|max:255|regex:/^[\pL\s]+$/u',
-        'apellidos_cliente' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
-        'dui_cliente'       => 'required|string|max:10|regex:/^\d{8}-\d$/|unique:cliente,dui_cliente',
-                'telefono_cliente'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
-        'nit_cliente'       => 'required|string|max:20|regex:/^\d{4}-\d{6}-\d{3}$/|unique:cliente,nit_cliente',
-        'email_cliente'     => 'required|email|max:255|unique:cliente,email_cliente',
-        'barrio'            => 'required|string|max:255',
-        'referencias'                 => 'required|array|min:1',
-        'referencias.*.nombre_ref'    => 'required|string|max:100|regex:/^[\pL\s]+$/u',
-                'referencias.*.telefono_ref'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
-        'id_departamento'   => 'required|exists:departamento,id',
-        'id_municipio'      => 'required|exists:municipio,id',
+    public function cerrarModal() {
+        $this->reset([
+            'form', 'modalCliente', 'modalActualizar', 'modalConfirm', 'cliente_id',
+            'id_departamento', 'id_municipio', 'municipios', 'nombres_cliente',
+            'apellidos_cliente', 'dui_cliente', 'telefono_cliente', 'nit_cliente',
+            'email_cliente', 'barrio'
         ]);
-        
-        
-        try{
-            DB::transaction(function(){
-                $cliente=Cliente::create([
-                    'nombres_cliente' => $this->nombres_cliente,
-                    'apellidos_cliente' => $this->apellidos_cliente,
-                    'dui_cliente' => $this->dui_cliente,
-                    'telefono_cliente' => $this->telefono_cliente,
-                    'nit_cliente' => $this->nit_cliente,
-                    'email_cliente' => $this->email_cliente,
-                    'monto_max' => 1000.00,
-                    'id_clasificacion' => 3,
-                    'barrio' => $this->barrio,
-                    'id_departamento' => $this->id_departamento,
-                    'id_municipio' => $this->id_municipio,
-                ]);
-
-                foreach($this->referencias as $ref){
-                    $referencia = Referencia::create([
-                        'telefono_ref' => $ref['telefono_ref'],
-                        'nombre_ref' => $ref['nombre_ref'],
-                    ]);
-                    $cliente->referencias()->attach($referencia->id);
-                }
-
-            });
-        } catch(\Exception $e){
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
-        }
-
-        $this->cerrarModal();
-        $this->dispatch('cliente-guardado');
     }
 
-    public function editar(){
-        
-        $validatedData = $this->validate([
-            'nombres_cliente'   => 'required|string|max:255|regex:/^[\pL\s]+$/u',
-            'apellidos_cliente' => 'required|string|max:255|regex:/^[\pL\s]+$/u',
-                'telefono_cliente'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
-            'barrio'            => 'required|string|max:255',
-            'referencias'                 => 'required|array|min:1',
-            'referencias.*.nombre_ref'    => 'required|string|max:100|regex:/^[\pL\s]+$/u',
-                'referencias.*.telefono_ref'  => 'required|string|max:9|regex:/^\d{4}-\d{4}$/',
-            'id_departamento'   => 'required|exists:departamento,id',
-            'id_municipio'      => 'required|exists:municipio,id',
-        ]);
-        
-        
-        try{
-            DB::transaction(function(){
-                $cliente = Cliente::findOrFail($this->cliente_id);
-
-                $cliente->update([
-                    'nombres_cliente' => $this->nombres_cliente,
-                    'apellidos_cliente' => $this->apellidos_cliente,
-                    'telefono_cliente' => $this->telefono_cliente,
-                    'barrio' => $this->barrio,
-                    'id_departamento' => $this->id_departamento,
-                    'id_municipio' => $this->id_municipio,
-                ]);
-
-                // Borramos físicamente las referencias antiguas y su relación
-                $cliente->referencias->each->delete();
-                $cliente->referencias()->detach();
-
-                foreach($this->referencias as $ref){
-                    $referencia = Referencia::create([
-                        'telefono_ref' => $ref['telefono_ref'],
-                        'nombre_ref' => $ref['nombre_ref'],
-                    ]);
-                    $cliente->referencias()->attach($referencia->id);
-                }
-
-            });
-            $this->cerrarModal();
-            $this->dispatch('cliente-editado');
-        } catch(\Exception $e){
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
-        }
-    }
-
-    public function eliminarCliente($cliente_id){
-        $this->modalConfirmTitle = 'eliminar cliente?';
-        $this->modalConfirmContent = '¿desea eliminar el cliente?';
+    public function eliminarCliente($cliente_id) {
         $this->cliente_id = $cliente_id;
+        $this->modalConfirmTitle = '¿Eliminar cliente?';
+        $this->modalConfirmContent = 'Esta acción no se puede deshacer.';
         $this->modalConfirm = true;
     }
 
-    public function delete(){
+    public function delete() {
         $cliente = Cliente::findOrFail($this->cliente_id);
-
-        // eliminar referencias
-        $cliente->referencias->each(function ($referencia) {
-            $referencia->delete(); 
-        });
-
-        // eliminar union 
+        $cliente->referencias->each->delete();
         $cliente->referencias()->detach();
-
-        //eliminar cliente
         $cliente->delete();
 
         $this->cerrarModal();
         $this->dispatch('cliente-eliminado');
     }
 
-    public function show($id){
+    public function show($id) {
         return redirect()->route('ver-cliente', ['cliente' => $id]);
     }
-
-    public function cerrarModal(){
-        $this->reset([
-            'form',
-            'modalCliente',
-            'modalActualizar',
-            'modalConfirm',
-            'modalConfirmTitle',
-            'modalConfirmContent',
-            'cliente_id',
-            'id_departamento',
-            'id_municipio',
-            'departamentos',
-            'municipios',
-            'nombres_cliente',
-            'apellidos_cliente',
-            'dui_cliente',
-            'telefono_cliente',
-            'nit_cliente',
-            'email_cliente',
-            'barrio',
-            'referencias',
-        ]);
-    }
-
 }
