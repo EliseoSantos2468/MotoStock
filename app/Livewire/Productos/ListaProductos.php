@@ -4,15 +4,53 @@ namespace App\Livewire\Productos;
 
 use App\Models\Marca;
 use App\Models\Producto;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpFoundation\Request;
 
 class ListaProductos extends Component
 {
     use WithPagination;
+
+    protected $messages = [
+        'nombre_producto.required' => 'El nombre del producto es obligatorio.',
+        'nombre_producto.string' => 'El nombre del producto debe ser texto.',
+        'nombre_producto.min' => 'El nombre del producto debe tener al menos 2 caracteres.',
+        'nombre_producto.max' => 'El nombre del producto no debe superar 255 caracteres.',
+        'nombre_producto.unique' => 'Ya existe un producto con ese nombre.',
+        'descripcion_producto.required' => 'La descripción del producto es obligatoria.',
+        'descripcion_producto.string' => 'La descripción del producto debe ser texto.',
+        'descripcion_producto.min' => 'La descripción del producto debe tener al menos 5 caracteres.',
+        'descripcion_producto.max' => 'La descripción no debe superar 355 caracteres.',
+        'marcas_nuevas.required' => 'Debes agregar al menos una marca al producto.',
+        'marcas_nuevas.array' => 'La lista de marcas no es válida.',
+        'marcas_nuevas.min' => 'Debes agregar al menos una marca al producto.',
+        'marcas_nuevas.*.idMarca.required' => 'Selecciona una marca válida.',
+        'marcas_nuevas.*.idMarca.exists' => 'Una de las marcas seleccionadas no es válida.',
+        'marcas_nuevas.*.cantidadMarca.required' => 'La cantidad es obligatoria.',
+        'marcas_nuevas.*.cantidadMarca.integer' => 'La cantidad debe ser un número entero.',
+        'marcas_nuevas.*.cantidadMarca.min' => 'La cantidad debe ser al menos 1.',
+        'marcas_nuevas.*.PrecioC.required' => 'El precio de cliente es obligatorio.',
+        'marcas_nuevas.*.PrecioC.numeric' => 'El precio de cliente debe ser numérico.',
+        'marcas_nuevas.*.PrecioC.min' => 'El precio de cliente no puede ser negativo.',
+        'marcas_nuevas.*.PrecioM.required' => 'El precio de mayoreo es obligatorio.',
+        'marcas_nuevas.*.PrecioM.numeric' => 'El precio de mayoreo debe ser numérico.',
+        'marcas_nuevas.*.PrecioM.min' => 'El precio de mayoreo no puede ser negativo.',
+        'idMarca.required' => 'Selecciona una marca.',
+        'idMarca.exists' => 'La marca seleccionada no es válida.',
+        'cantidadMarca.required' => 'La cantidad es obligatoria.',
+        'cantidadMarca.integer' => 'La cantidad debe ser un número entero.',
+        'cantidadMarca.min' => 'La cantidad debe ser al menos 1.',
+        'PrecioC.required' => 'El precio de cliente es obligatorio.',
+        'PrecioC.numeric' => 'El precio de cliente debe ser numérico.',
+        'PrecioC.min' => 'El precio de cliente no puede ser negativo.',
+        'PrecioM.required' => 'El precio de mayoreo es obligatorio.',
+        'PrecioM.numeric' => 'El precio de mayoreo debe ser numérico.',
+        'PrecioM.min' => 'El precio de mayoreo no puede ser negativo.',
+    ];
 
     // buscador
     public $buscador = '';
@@ -38,10 +76,15 @@ class ListaProductos extends Component
     #[Layout('layouts.app')]
     public function render()
     {
-        $query = Producto::with(['marcas', 'recibos', 'clientes']);
+        $query = Producto::with(['marcas']);
 
-        if ($this->filtro && $this->buscador != '') {
-            $query->where($this->filtro, 'like', '%' . $this->buscador . '%');
+        if ($this->filtro && trim((string) $this->buscador) !== '') {
+            if ($this->filtro === 'id') {
+                $query->where('id', 'like', '%' . trim((string) $this->buscador) . '%');
+            } else {
+                $search = '%' . Str::lower(trim((string) $this->buscador)) . '%';
+                $query->whereRaw('LOWER(nombre_producto) LIKE ?', [$search]);
+            }
         }
 
         $marcas = Marca::all();
@@ -52,18 +95,7 @@ class ListaProductos extends Component
     
     public function abrirConfirmacion() 
     {
-        $this->validate([
-            'nombre_producto' => 'required|string|max:255',
-            'descripcion_producto' => 'required|string|max:300',
-            'marcas_nuevas' => 'required|array|min:1',
-            'marcas_nuevas.*.idMarca' => 'required|exists:marca,id',
-            'marcas_nuevas.*.cantidadMarca' => 'required|integer',
-            'marcas_nuevas.*.PrecioC' => 'required|numeric|min:0',
-            'marcas_nuevas.*.PrecioM' => 'required|numeric|min:0',
-        ], [
-            'marcas_nuevas.required' => 'Debes agregar al menos una marca al producto.',
-            'marcas_nuevas.*.idMarca.exists' => 'Una de las marcas seleccionadas no es válida.',
-        ]);
+        $this->validate($this->reglasProducto($this->producto_id ?: null));
 
         $this->modalProducto = false;
         $this->modalActualizar = false;
@@ -79,19 +111,6 @@ class ListaProductos extends Component
     }
 
     public function crear(){
-        $validateData = $this->validate([
-            'nombre_producto' => 'required|string|max:255',
-            'descripcion_producto' => 'required|string|max:300',
-            'marcas_nuevas' => 'required|array|min:1',
-            'marcas_nuevas.*.idMarca' => 'required|exists:marca,id',
-            'marcas_nuevas.*.cantidadMarca' => 'required|integer',
-            'marcas_nuevas.*.PrecioC' => 'required|numeric|min:0',
-            'marcas_nuevas.*.PrecioM' => 'required|numeric|min:0',
-        ], [
-            'marcas_nuevas.required' => 'Debes agregar al menos una marca al producto.',
-            'marcas_nuevas.*.idMarca.exists' => 'Una de las marcas seleccionadas no es válida.',
-        ]);
-
         try {
             DB::transaction(function () {
                 $producto = Producto::create([
@@ -115,7 +134,6 @@ class ListaProductos extends Component
                 });
         } catch (\Exception $e) {
             session()->flash('error', 'Error al crear: ' . $e->getMessage());
-            dd($e->getMessage());
         }
 
         $this->cerrarModal(); 
@@ -164,6 +182,7 @@ class ListaProductos extends Component
         $this->producto_id = $id;
         $this->nombre_producto = $producto->nombre_producto;
         $this->descripcion_producto = $producto->descripcion_producto;
+        $this->marcas_nuevas = [];
 
         //recolectar las marcas
         foreach ($producto->marcas as $marca) {
@@ -183,16 +202,6 @@ class ListaProductos extends Component
     }
 
     public function editar(){
-        $this->validate([
-            'nombre_producto' => 'required|string|max:255',
-            'descripcion_producto' => 'required|string|max:300',
-            'marcas_nuevas' => 'required|array|min:1',
-            'marcas_nuevas.*.idMarca' => 'required|exists:marca,id',
-            'marcas_nuevas.*.cantidadMarca' => 'required|integer',
-            'marcas_nuevas.*.PrecioC' => 'required|numeric|min:0',
-            'marcas_nuevas.*.PrecioM' => 'required|numeric|min:0',
-        ]);
-
         try {
             $producto = Producto::with('marcas')->findOrFail($this->producto_id);
 
@@ -224,12 +233,34 @@ class ListaProductos extends Component
     public function agregarMarca(){
         $this->validate([
             'idMarca' => 'required|integer|exists:marca,id',
-            'cantidadMarca' => 'required|integer',
-            'PrecioC' => 'required',
-            'PrecioM' => 'required',
+            'cantidadMarca' => 'required|integer|min:1',
+            'PrecioC' => 'required|numeric|min:0',
+            'PrecioM' => 'required|numeric|min:0',
         ]);
 
+        foreach ($this->marcas_nuevas as $index => $marcaExistente) {
+            if ((int) $marcaExistente['idMarca'] === (int) $this->idMarca) {
+                $this->marcas_nuevas[$index]['cantidadMarca'] = (int) $marcaExistente['cantidadMarca'] + (int) $this->cantidadMarca;
+                $this->marcas_nuevas[$index]['PrecioC'] = (float) $this->PrecioC;
+                $this->marcas_nuevas[$index]['PrecioM'] = (float) $this->PrecioM;
+
+                $this->reset([
+                    'idMarca',
+                    'cantidadMarca',
+                    'PrecioC',
+                    'PrecioM',
+                ]);
+
+                return;
+            }
+        }
+
         $marcaInfo = Marca::find($this->idMarca);
+
+        if (!$marcaInfo) {
+            $this->addError('idMarca', 'La marca seleccionada no es válida.');
+            return;
+        }
 
         $this->marcas_nuevas[] = [
             'idMarca' => $this->idMarca,
@@ -256,6 +287,7 @@ class ListaProductos extends Component
     }
 
     public function cerrarModal(){
+        $this->resetValidation();
         $this->reset([
             'form',
             'producto_id',
@@ -272,5 +304,24 @@ class ListaProductos extends Component
             'modalConfirmTitle',
             'modalConfirmContent',
         ]);
+    }
+
+    private function reglasProducto(?int $id = null): array
+    {
+        $uniqueRule = Rule::unique('producto', 'nombre_producto');
+
+        if ($id !== null) {
+            $uniqueRule->ignore($id);
+        }
+
+        return [
+            'nombre_producto' => ['required', 'string', 'min:2', 'max:255', $uniqueRule],
+            'descripcion_producto' => ['required', 'string', 'min:5', 'max:355'],
+            'marcas_nuevas' => ['required', 'array', 'min:1'],
+            'marcas_nuevas.*.idMarca' => ['required', 'integer', 'exists:marca,id'],
+            'marcas_nuevas.*.cantidadMarca' => ['required', 'integer', 'min:1'],
+            'marcas_nuevas.*.PrecioC' => ['required', 'numeric', 'min:0'],
+            'marcas_nuevas.*.PrecioM' => ['required', 'numeric', 'min:0'],
+        ];
     }
 }

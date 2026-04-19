@@ -14,14 +14,14 @@
     {{-- Card Principal del Cliente --}}
     <div class="bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
         {{-- Encabezado con Nombre y Clasificación --}}
-        <div class="bg-gradient-to-r from-indigo-600 to-blue-700 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-2xl font-bold text-white flex items-center">
+        <div class="bg-gradient-to-r from-indigo-600 to-blue-700 px-6 py-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center">
                 <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 {{ $cliente->nombres_cliente }} {{ $cliente->apellidos_cliente }}
             </h2>
-            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white text-indigo-700 uppercase tracking-wider">
+            <span class="self-start sm:self-auto px-3 py-1 rounded-full text-xs font-semibold bg-white text-indigo-700 uppercase tracking-wider">
                 {{ $cliente->clasificacion->nombre_clasificacion ?? 'Sin Clasificación' }}
             </span>
         </div>

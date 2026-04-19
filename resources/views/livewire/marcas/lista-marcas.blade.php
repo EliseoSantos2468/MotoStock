@@ -1,4 +1,4 @@
-<div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {{-- modales --}}
     <x-action-message class="mr-3" on="marca-eliminada">
     {{ __('Marca Eliminada con éxito!') }}
@@ -23,7 +23,7 @@
         @endif
 
         <x-slot name="content">
-            <form id="form-{{$form}}-marca" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="form-{{$form}}-marca" wire:submit="{{$form}}" class="mx-auto w-full max-w-2xl grid grid-cols-1 gap-4">
 
                 <x-form-marcas 
                     :form="$form"
@@ -87,7 +87,7 @@
     <div class="mb-5 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         
         <div class="flex flex-col sm:flex-row gap-2">
-            <x-input type="text" placeholder="Buscar" wire:model.live="buscador" class="w-full sm:w-64"/>
+            <x-input type="text" placeholder="Buscar" wire:model.live.debounce.400ms="buscador" class="w-full sm:w-64"/>
 
             <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full sm:w-auto" 
                     name="filtro" 

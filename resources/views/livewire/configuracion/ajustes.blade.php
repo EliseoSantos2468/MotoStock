@@ -8,7 +8,7 @@
             </div>
         @endif
 
-        <form wire:submit.prevent="confirmarGuardado" class="space-y-6">
+        <form wire:submit.prevent="confirmarGuardado" class="mx-auto w-full max-w-2xl space-y-6">
             
             <div>
                 <label class="block text-sm font-medium text-gray-700">Correo para envío de Recibos</label>
@@ -23,6 +23,7 @@
                         <input type="color" wire:model="color_primario" class="h-10 w-14 rounded cursor-pointer">
                         <span class="text-gray-500 text-sm font-mono uppercase">{{ $color_primario }}</span>
                     </div>
+                    @error('color_primario') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
 
                 <div>
@@ -31,15 +32,16 @@
                         <input type="color" wire:model="color_secundario" class="h-10 w-14 rounded cursor-pointer">
                         <span class="text-gray-500 text-sm font-mono uppercase">{{ $color_secundario }}</span>
                     </div>
+                    @error('color_secundario') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
             </div>
 
-            <div class="flex items-center justify-between mt-8">
+            <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <button type="button" wire:click="restaurarPorDefecto" class="text-sm text-gray-500 hover:text-gray-800 underline transition-colors">
                     Volver a los colores por defecto
                 </button>
 
-                <button type="submit" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded transition-colors" style="background-color: {{ $primaryColor }}">
+                <button type="submit" class="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded transition-colors">
                     Guardar Cambios
                 </button>
             </div>
@@ -56,10 +58,10 @@
             </x-slot>
 
             <x-slot name="footer">
-                <button wire:click="$set('modalConfirmacion', false)" class="mr-3 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">
+                <button wire:click="$set('modalConfirmacion', false)" class="w-full sm:w-auto sm:mr-3 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">
                     Cancelar
                 </button>
-                <button wire:click="guardarConfiguracion" class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 transition-colors" style="background-color: {{ $primaryColor }}">
+                <button wire:click="guardarConfiguracion" class="w-full sm:w-auto px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 transition-colors">
                     Sí, aplicar cambios
                 </button>
             </x-slot>

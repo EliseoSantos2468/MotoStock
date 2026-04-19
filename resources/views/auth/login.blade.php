@@ -17,7 +17,7 @@
             </div>
         @endsession
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" class="mx-auto w-full max-w-sm space-y-4">
             @csrf
 
             <div>
@@ -25,19 +25,19 @@
                 <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             </div>
 
-            <div class="mt-4">
+            <div>
                 <x-label for="password" value="{{ __('Contraseña') }}" />
                 <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
             </div>
 
-            <div class="block mt-4">
+            <div class="block">
                 <label for="remember_me" class="flex items-center">
                     <x-checkbox id="remember_me" name="remember" />
                     <span class="ms-2 text-sm text-gray-600">{{ __('Recordarme') }}</span>
                 </label>
             </div>
 
-            <div class="flex flex-col gap-2 items-center justify-end mt-4">
+            <div class="flex flex-col gap-2 items-center justify-end">
                 @if (Route::has('password.request'))
                     <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
                         {{ __('¿Olvidaste tu contraseña?') }}
@@ -45,7 +45,7 @@
                 @endif
 
                 <button class="
-                        w-80 text-center 
+                    w-full text-center 
                         text-white 
                         p-2 bg-gradient-to-r 
                         from-blue-600 

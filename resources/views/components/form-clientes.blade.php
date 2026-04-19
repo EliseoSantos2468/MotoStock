@@ -6,8 +6,8 @@
     'form' => '',
 ])
 
-<div class="max-w-4xl mx-auto p-4 bg-white shadow-sm rounded-lg">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4" 
+<div class="w-full rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5" 
         x-data="{
             maskDui(val) {
                 return val.replace(/\D/g, '').replace(/^(\d{8})(\d)/, '$1-$2').substr(0, 10);
@@ -24,7 +24,7 @@
         }">
         
         {{-- Nombres --}}
-        <div>
+        <div class="md:col-span-1">
             <x-label for="nombres" value="Nombres" class="font-semibold" />
             <x-input id="nombres" type="text" class="mt-1 block w-full" placeholder="Nombres del cliente" 
                 x-on:input="$el.value = filterName($el.value)" 
@@ -33,7 +33,7 @@
         </div>
 
         {{-- Apellidos --}}
-        <div>
+        <div class="md:col-span-1">
             <x-label for="apellidos" value="Apellidos" class="font-semibold" />
             <x-input id="apellidos" type="text" class="mt-1 block w-full" placeholder="Apellidos del cliente" 
                 x-on:input="$el.value = filterName($el.value)" 
@@ -42,7 +42,7 @@
         </div>
 
         {{-- DUI --}}
-        <div class="{{ $form == 'editar' ? 'hidden' : '' }}">
+        <div class="md:col-span-1">
             <x-label for="dui" value="DUI" class="font-semibold" />
             <x-input id="dui" type="text" class="mt-1 block w-full" placeholder="00000000-0" 
                 x-on:input="$el.value = maskDui($el.value)" 
@@ -51,7 +51,7 @@
         </div>
 
         {{-- Telefono --}}
-        <div>
+        <div class="md:col-span-1">
             <x-label for="telefono" value="Teléfono" class="font-semibold" />
             <x-input id="telefono" type="text" class="mt-1 block w-full" placeholder="0000-0000" 
                 x-on:input="$el.value = maskTel($el.value)" 
@@ -60,7 +60,7 @@
         </div>
 
         {{-- NIT --}}
-        <div class="{{ $form == 'editar' ? 'hidden' : '' }}">
+        <div class="md:col-span-1 {{ $form == 'editar' ? 'hidden' : '' }}">
             <x-label for="nit" value="NIT" class="font-semibold" />
             <x-input id="nit" type="text" class="mt-1 block w-full" placeholder="0000-000000-000-0" 
                 x-on:input="$el.value = maskNit($el.value)" 
@@ -69,7 +69,7 @@
         </div>
 
         {{-- Correo --}}
-        <div class="{{ $form == 'editar' ? 'hidden' : '' }}">
+        <div class="md:col-span-1 {{ $form == 'editar' ? 'hidden' : '' }}">
             <x-label for="correo" value="Correo" class="font-semibold" />
             <x-input id="correo" type="email" class="mt-1 block w-full" placeholder="correo@ejemplo.com" 
                 wire:model="email_cliente" />
@@ -85,7 +85,7 @@
         </div>
 
         {{-- Departamento --}}
-        <div>
+        <div class="md:col-span-1">
             <x-label for="departamento" value="Departamento" class="font-semibold" />
             <select wire:model.live="id_departamento" class="mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                 <option value="" selected disabled>Seleccione departamento</option>
@@ -97,7 +97,7 @@
         </div>
 
         {{-- Municipio --}}
-        <div>
+        <div class="md:col-span-1">
             <x-label for="municipio" value="Municipio" class="font-semibold" />
             <select wire:model="id_municipio" class="mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                 <option value="" selected disabled>Seleccione municipio</option>

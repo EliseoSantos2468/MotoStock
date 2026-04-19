@@ -11,109 +11,62 @@
                 $ventasDelta = $metrics['ventas_delta'] ?? 0;
                 $ordenesDelta = $metrics['ordenes_delta'] ?? 0;
                 $clientesDelta = $metrics['clientes_delta'] ?? 0;
-                $conversionDelta = $metrics['conversion_delta'] ?? 0;
                 $recentVentas = $recentVentas ?? collect();
             @endphp
 
             <!-- Tarjetas de Estadísticas -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Ventas Totales -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3">
-                            <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-slate-500">Ventas del Mes</p>
+                        <div class="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                             </svg>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Ventas del Mes</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">$ {{ number_format($metrics['ventas_mes'] ?? 0, 2) }}</div>
-                                    <div class="ml-2 flex items-baseline text-sm font-semibold {{ $ventasDelta >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                                        <svg class="self-center flex-shrink-0 h-5 w-5 {{ $ventasDelta >= 0 ? 'text-green-500' : 'text-red-500 rotate-180' }}" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                                        </svg>
-                                        <span>{{ number_format(abs($ventasDelta), 1) }}%</span>
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between">
+                        <p class="text-3xl font-semibold text-slate-900 tracking-tight">$ {{ number_format($metrics['ventas_mes'] ?? 0, 2) }}</p>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $ventasDelta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }}">
+                            {{ $ventasDelta >= 0 ? '+' : '-' }}{{ number_format(abs($ventasDelta), 1) }}%
+                        </span>
                     </div>
                 </div>
 
-                <!-- Órdenes -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-3">
-                            <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-slate-500">Órdenes del Mes</p>
+                        <div class="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                             </svg>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Ordenes del Mes</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">{{ number_format($metrics['ordenes_mes'] ?? 0) }}</div>
-                                    <div class="ml-2 flex items-baseline text-sm font-semibold {{ $ordenesDelta >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                                        <svg class="self-center flex-shrink-0 h-5 w-5 {{ $ordenesDelta >= 0 ? 'text-green-500' : 'text-red-500 rotate-180' }}" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                                        </svg>
-                                        <span>{{ number_format(abs($ordenesDelta), 1) }}%</span>
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between">
+                        <p class="text-3xl font-semibold text-slate-900 tracking-tight">{{ number_format($metrics['ordenes_mes'] ?? 0) }}</p>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $ordenesDelta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }}">
+                            {{ $ordenesDelta >= 0 ? '+' : '-' }}{{ number_format(abs($ordenesDelta), 1) }}%
+                        </span>
                     </div>
                 </div>
 
-                <!-- Clientes Nuevos -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-3">
-                            <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-slate-500">Clientes</p>
+                        <div class="h-9 w-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M12 12a5 5 0 100-10 5 5 0 000 10z"></path>
                             </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Clientes Nuevos</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">{{ number_format($metrics['clientes_mes'] ?? 0) }}</div>
-                                    <div class="ml-2 flex items-baseline text-sm font-semibold {{ $clientesDelta >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                                        <svg class="self-center flex-shrink-0 h-5 w-5 {{ $clientesDelta >= 0 ? 'text-green-500' : 'text-red-500 rotate-180' }}" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                                        </svg>
-                                        <span>{{ number_format(abs($clientesDelta), 1) }}%</span>
-                                    </div>
-                                </dd>
-                            </dl>
                         </div>
                     </div>
-                </div>
-
-                <!-- Tasa de Conversión -->
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-3">
-                            <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                            </svg>
+                    <div class="mt-4 flex items-end justify-between">
+                        <div>
+                            <p class="text-3xl font-semibold text-slate-900 tracking-tight">{{ number_format($metrics['clientes_total'] ?? 0) }}</p>
+                            <p class="text-xs text-slate-500 mt-1">Nuevos este mes: {{ number_format($metrics['clientes_mes'] ?? 0) }}</p>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Tasa de Conversion</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">{{ number_format($metrics['conversion'] ?? 0, 2) }}%</div>
-                                    <div class="ml-2 flex items-baseline text-sm font-semibold {{ $conversionDelta >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                                        <svg class="self-center flex-shrink-0 h-5 w-5 {{ $conversionDelta >= 0 ? 'text-green-500 rotate-180' : 'text-red-500' }}" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                        </svg>
-                                        <span>{{ number_format(abs($conversionDelta), 1) }}%</span>
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $clientesDelta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }}">
+                            {{ $clientesDelta >= 0 ? '+' : '-' }}{{ number_format(abs($clientesDelta), 1) }}%
+                        </span>
                     </div>
                 </div>
             </div>

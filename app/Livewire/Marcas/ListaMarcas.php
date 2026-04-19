@@ -3,6 +3,8 @@
 namespace App\Livewire\Marcas;
 
 use App\Models\Marca;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
@@ -11,6 +13,14 @@ use Livewire\WithPagination;
 class ListaMarcas extends Component
 {
     use WithPagination;
+
+    protected $messages = [
+        'nombre_marca.required' => 'El nombre de la marca es obligatorio.',
+        'nombre_marca.string' => 'El nombre de la marca debe ser texto.',
+        'nombre_marca.min' => 'El nombre de la marca debe tener al menos 2 caracteres.',
+        'nombre_marca.max' => 'El nombre de la marca no debe superar 255 caracteres.',
+        'nombre_marca.unique' => 'Ya existe una marca con ese nombre.',
+    ];
     // buscador
     public $buscador = '';
     public $filtro = 'nombre_marca';
@@ -32,8 +42,13 @@ class ListaMarcas extends Component
     {
         $query = Marca::query();
 
-        if ($this->filtro && $this->buscador != '') {
-            $query->where($this->filtro, 'like', '%' . $this->buscador . '%');
+        if ($this->filtro && trim((string) $this->buscador) !== '') {
+            if ($this->filtro === 'id') {
+                $query->where('id', 'like', '%' . trim((string) $this->buscador) . '%');
+            } else {
+                $search = '%' . Str::lower(trim((string) $this->buscador)) . '%';
+                $query->whereRaw('LOWER(nombre_marca) LIKE ?', [$search]);
+            }
         }
 
         $marcas = $query->paginate(10);
@@ -95,10 +110,6 @@ class ListaMarcas extends Component
     }
 
     public function editar(){
-        $this->validate([
-            'nombre_marca' => 'required|string|max:255|unique:marca,nombre_marca',
-        ]);
-
         try {
 
             $marca = Marca::findOrFail($this->marca_id);
@@ -115,11 +126,7 @@ class ListaMarcas extends Component
     }
 
     public function abrirConfirmacion(){
-        if($this->marca_id == ''){
-            $this->validate([
-                'nombre_marca' => 'required|string|max:255|unique:marca,nombre_marca',
-            ]);
-        }
+        $this->validate($this->reglas($this->marca_id ?: null));
 
         $this->modalMarca = false;
         $this->modalActualizar = false;
@@ -128,10 +135,6 @@ class ListaMarcas extends Component
     }
 
     public function crear(){
-        $this->validate([
-            'nombre_marca' => 'required|string|max:255|unique:marca,nombre_marca',
-        ]);
-
         try {
             Marca::create([
                 'nombre_marca' => $this->nombre_marca,
@@ -145,6 +148,7 @@ class ListaMarcas extends Component
     }
 
     public function cerrarModal(){
+        $this->resetValidation();
         $this->reset([
             'form',
             'marca_id',
@@ -155,5 +159,18 @@ class ListaMarcas extends Component
             'modalConfirmTitle',
             'modalConfirmContent',
         ]);
+    }
+
+    private function reglas(?int $id = null): array
+    {
+        $rule = Rule::unique('marca', 'nombre_marca');
+
+        if ($id !== null) {
+            $rule->ignore($id);
+        }
+
+        return [
+            'nombre_marca' => ['required', 'string', 'min:2', 'max:255', $rule],
+        ];
     }
 }

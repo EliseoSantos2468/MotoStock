@@ -2,14 +2,17 @@
 
 namespace App\Livewire;
 
+use App\Mail\EnviarReciboMailable;
 use App\Models\Cliente;
-use Livewire\Component;
-use App\Models\Producto;
 use App\Models\Marca;
+use App\Models\Producto;
 use App\Models\Recibo;
-use Livewire\Attributes\Layout;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 class Ventas extends Component
 {
@@ -36,20 +39,35 @@ class Ventas extends Component
     #[Layout('layouts.app')]
     public function render()
     {
+        $busquedaProducto = trim((string) $this->buscador);
+
         // obtener productos
         $productos = Producto::with('marcas')
-            ->where(DB::raw('LOWER(nombre_producto)'), 'like', '%' . strtolower($this->buscador) . '%')
-            ->orWhere('id', 'like', '%' . $this->buscador . '%')
+            ->where(function ($query) use ($busquedaProducto) {
+                if ($busquedaProducto === '') {
+                    return;
+                }
+
+                $query->whereRaw('LOWER(nombre_producto) LIKE ?', ['%' . Str::lower($busquedaProducto) . '%'])
+                    ->orWhere('id', 'like', '%' . $busquedaProducto . '%');
+            })
             ->paginate(10);
 
         //obtener clientes
         $listaClientes = [];
         if ($this->tipoCliente == 'registrado') {
-            $listaClientes = Cliente::where('nombres_cliente', 'like', '%' . $this->busquedaCliente . '%')
-                ->orWhere('apellidos_cliente', 'like', '%' . $this->busquedaCliente . '%')
-                ->orWhere('dui_cliente', 'like', '%' . $this->busquedaCliente . '%')
-                ->take(5)
-                ->get();
+            $busquedaCliente = trim((string) $this->busquedaCliente);
+            if ($busquedaCliente !== '') {
+                $listaClientes = Cliente::where(function ($query) use ($busquedaCliente) {
+                    $search = '%' . Str::lower($busquedaCliente) . '%';
+
+                    $query->whereRaw('LOWER(nombres_cliente) LIKE ?', [$search])
+                        ->orWhereRaw('LOWER(apellidos_cliente) LIKE ?', [$search])
+                        ->orWhereRaw('LOWER(dui_cliente) LIKE ?', [$search]);
+                })
+                    ->take(5)
+                    ->get();
+            }
         }
 
         return view('livewire.ventas', [
@@ -89,14 +107,35 @@ class Ventas extends Component
     public function agregarAlCarrito()
     {
         $this->validate([
-            'marcaSeleccionada' => 'required',
-            'cantidadAVender' => 'required|integer|min:1',
+            'marcaSeleccionada' => ['required', 'integer', Rule::exists('marca', 'id')],
+            'cantidadAVender' => ['required', 'integer', 'min:1'],
+        ], [
+            'marcaSeleccionada.required' => 'Selecciona una marca.',
+            'marcaSeleccionada.exists' => 'La marca seleccionada no es válida.',
+            'cantidadAVender.required' => 'Ingresa la cantidad a vender.',
+            'cantidadAVender.integer' => 'La cantidad debe ser un número entero.',
+            'cantidadAVender.min' => 'La cantidad mínima es 1.',
         ]);
+
+        if (!$this->productoSeleccionado) {
+            $this->addError('marcaSeleccionada', 'Selecciona primero un producto válido.');
+            return;
+        }
 
         // Buscamos la información de la marca dentro de la relación del producto
         $marcaInfo = $this->productoSeleccionado->marcas
             ->where('id', $this->marcaSeleccionada)
             ->first();
+
+        if (!$marcaInfo) {
+            $this->addError('marcaSeleccionada', 'La marca seleccionada no pertenece al producto.');
+            return;
+        }
+
+        if ($this->cantidadAVender > $marcaInfo->pivot->cantidad) {
+            $this->addError('cantidadAVender', 'No puedes vender más de ' . $marcaInfo->pivot->cantidad . ' unidades.');
+            return;
+        }
 
         $subtotal = $marcaInfo->pivot->precio_cliente * $this->cantidadAVender;
 
@@ -132,97 +171,129 @@ class Ventas extends Component
     {
         if (count($this->carrito) > 0) {
             $this->modalConfirmVenta = true;
+        } else {
+            $this->addError('carrito', 'Agrega al menos un producto al ticket.');
         }
     }
-
     public function guardarVenta()
     {
-        // 1. Validación de cliente (si es modo registrado)
-        if ($this->tipoCliente == 'registrado' && !$this->clienteId) {
-            $this->addError('busquedaCliente', 'Seleccione un cliente registrado.');
+        $this->resetErrorBag();
+
+        if (empty($this->carrito)) {
+            $this->addError('carrito', 'Agrega al menos un producto al ticket.');
             return;
         }
 
+        if ($this->totalVenta <= 0) {
+            $this->addError('carrito', 'El total de la venta debe ser mayor a cero.');
+            return;
+        }
+
+        if ($this->tipoCliente == 'registrado') {
+            $this->validate([
+                'clienteId' => ['required', 'integer', Rule::exists('cliente', 'id')],
+            ], [
+                'clienteId.required' => 'Seleccione un cliente registrado.',
+                'clienteId.exists' => 'El cliente seleccionado no existe.',
+            ]);
+
+            if (!Cliente::find($this->clienteId)) {
+                $this->addError('clienteId', 'El cliente seleccionado no existe.');
+                return;
+            }
+        } else {
+            $this->validate([
+                'emailFacturacion' => ['required', 'email', 'max:255'],
+            ], [
+                'emailFacturacion.required' => 'Ingresa el correo para la factura electrónica.',
+                'emailFacturacion.email' => 'El correo para la factura no tiene un formato válido.',
+                'emailFacturacion.max' => 'El correo para la factura no debe superar 255 caracteres.',
+            ]);
+        }
+
         try {
-            // 2. Ejecución de la transacción en la base de datos
             $idGenerado = DB::transaction(function () {
-                // Crear la cabecera del recibo
                 $recibo = Recibo::create([
-                    'fecha'           => now()->format('Y-m-d'),
-                    'total'           => $this->totalVenta,
-                    'id_cliente'      => ($this->tipoCliente == 'registrado') ? $this->clienteId : null,
-                    'email_invitado'  => ($this->tipoCliente == 'invitado') ? $this->emailFacturacion : null,
+                    'fecha' => now()->format('Y-m-d'),
+                    'total' => $this->totalVenta,
+                    'id_cliente' => ($this->tipoCliente == 'registrado') ? $this->clienteId : null,
+                    'email_invitado' => ($this->tipoCliente == 'invitado') ? $this->emailFacturacion : null,
                 ]);
 
-                // Procesar cada producto del carrito
+                $productosPorId = Producto::with('marcas')
+                    ->whereIn('id', collect($this->carrito)->pluck('producto_id')->unique()->values())
+                    ->get()
+                    ->keyBy('id');
+
                 foreach ($this->carrito as $item) {
-                    // Registrar detalle de venta con precio "congelado"
-                    $recibo->productos()->attach($item['producto_id'], [
-                        'cantidad' => $item['cantidad'],
-                        'precio_unitario' => $item['precio']
-                    ]);
+                    $producto = $productosPorId->get($item['producto_id']);
 
-                    // Actualizar el stock y el contador de ventas en la tabla pivote de marcas
-                    $producto = Producto::find($item['producto_id']);
-                    $marcaPivot = $producto->marcas()->where('marca_id', $item['marca_id'])->first();
-
-                    if ($marcaPivot) {
-                        $producto->marcas()->updateExistingPivot($item['marca_id'], [
-                            'cantidad'       => $marcaPivot->pivot->cantidad - $item['cantidad'],
-                            'venta_producto' => $marcaPivot->pivot->venta_producto + $item['cantidad']
-                        ]);
+                    if (!$producto) {
+                        throw new \RuntimeException('Uno de los productos del ticket ya no existe.');
                     }
 
-                    // Si el cliente está registrado, guardar en su historial de compras
+                    $marcaPivot = $producto->marcas()->where('marca_id', $item['marca_id'])->first();
+
+                    if (!$marcaPivot) {
+                        throw new \RuntimeException('Una de las marcas del ticket ya no está disponible.');
+                    }
+
+                    if ($marcaPivot->pivot->cantidad < $item['cantidad']) {
+                        throw new \RuntimeException('No hay suficiente stock para ' . $producto->nombre_producto . '.');
+                    }
+
+                    $recibo->productos()->attach($item['producto_id'], [
+                        'cantidad' => $item['cantidad'],
+                        'precio_unitario' => $item['precio'],
+                    ]);
+
+                    $producto->marcas()->updateExistingPivot($item['marca_id'], [
+                        'cantidad' => $marcaPivot->pivot->cantidad - $item['cantidad'],
+                        'venta_producto' => $marcaPivot->pivot->venta_producto + $item['cantidad'],
+                    ]);
+
                     if ($this->tipoCliente == 'registrado') {
                         DB::table('cliente_producto')->insert([
-                            'cliente_id'  => $this->clienteId,
+                            'cliente_id' => $this->clienteId,
                             'producto_id' => $item['producto_id'],
-                            'cantidad'    => $item['cantidad'],
-                            'created_at'  => now(),
+                            'cantidad' => $item['cantidad'],
+                            'created_at' => now(),
                         ]);
                     }
                 }
-                
-                // Retornar el ID del recibo para el PDF y el correo
+
                 return $recibo->id;
             });
 
-            // 3. Lógica de envío de correo electrónico
-            // Buscamos el recibo con la relación del cliente cargada
             $reciboParaEmail = Recibo::with('cliente')->find($idGenerado);
             $destinatario = null;
 
-            // Determinar el correo según el tipo de cliente
-            if ($this->tipoCliente == 'registrado' && $reciboParaEmail->cliente) {
+            if ($this->tipoCliente == 'registrado' && $reciboParaEmail && $reciboParaEmail->cliente) {
                 $destinatario = $reciboParaEmail->cliente->email_cliente;
             } elseif ($this->tipoCliente == 'invitado' && $this->emailFacturacion) {
                 $destinatario = $this->emailFacturacion;
             }
 
-            // Si existe un correo, enviar el Mailable
             if ($destinatario) {
-                // Asegúrate de haber creado el mailable EnviarReciboMailable previamente
-                Mail::to($destinatario)->send(new \App\Mail\EnviarReciboMailable($reciboParaEmail));
+                Mail::to($destinatario)->send(new EnviarReciboMailable($reciboParaEmail));
             }
 
-            // 4. Limpieza del estado del componente y notificaciones
             $this->reset(['carrito', 'totalVenta', 'clienteId', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta']);
-            
-            $this->dispatch('venta-realizada');
-            
-            // Emitir evento para abrir el PDF en una nueva pestaña del navegador
-            $this->dispatch('abrir-ticket', id: $idGenerado);
+            $this->resetErrorBag();
 
+            $this->dispatch('venta-realizada');
+            $this->dispatch('abrir-ticket', id: $idGenerado);
         } catch (\Exception $e) {
-            // En caso de error, mostrar mensaje al usuario
             session()->flash('error', 'Ocurrió un error al procesar la venta: ' . $e->getMessage());
         }
     }
+
     public function updatedTipoCliente()
     {
         $this->reset(['clienteId', 'emailFacturacion']);
+        $this->resetErrorBag();
     }
+
     public function cerrarModal(){
         $this->reset([
             'modalSeleccion',

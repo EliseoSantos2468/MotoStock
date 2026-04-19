@@ -13,6 +13,16 @@ class Ajustes extends Component
     
     public $modalConfirmacion = false;
 
+    protected $messages = [
+        'color_primario.required' => 'El color primario es obligatorio.',
+        'color_primario.regex' => 'El color primario debe tener un formato hexadecimal válido.',
+        'color_secundario.required' => 'El color secundario es obligatorio.',
+        'color_secundario.regex' => 'El color secundario debe tener un formato hexadecimal válido.',
+        'correo_empresa.required' => 'El correo de la empresa es obligatorio.',
+        'correo_empresa.email' => 'El correo de la empresa no tiene un formato válido.',
+        'correo_empresa.max' => 'El correo de la empresa no debe superar 255 caracteres.',
+    ];
+
     #[Layout('layouts.app')]
     public function mount()
     {
@@ -27,11 +37,7 @@ class Ajustes extends Component
 
     public function confirmarGuardado()
     {
-        $this->validate([
-            'color_primario' => 'required',
-            'color_secundario' => 'required',
-            'correo_empresa' => 'required|email',
-        ]);
+        $this->validate($this->reglasConfiguracion());
 
         $this->modalConfirmacion = true;
     }
@@ -44,6 +50,8 @@ class Ajustes extends Component
 
     public function guardarConfiguracion()
     {
+        $this->validate($this->reglasConfiguracion());
+
         $config = Configuracion::first();
 
         if ($config) {
@@ -68,5 +76,14 @@ class Ajustes extends Component
     public function render()
     {
         return view('livewire.configuracion.ajustes');
+    }
+
+    private function reglasConfiguracion(): array
+    {
+        return [
+            'color_primario' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'color_secundario' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'correo_empresa' => ['required', 'email', 'max:255'],
+        ];
     }
 }

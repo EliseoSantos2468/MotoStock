@@ -1,4 +1,4 @@
-<div class="py-5">
+<div class="py-5 px-4 sm:px-6 lg:px-8">
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Nueva Venta') }}
@@ -39,6 +39,7 @@
                             @endforeach
                         @endif
                     </select>
+                    <x-input-error for="marcaSeleccionada" class="mt-1" />
                 </div>
 
                 @if ($marcaSeleccionada)
@@ -69,6 +70,7 @@
                                 @endif
                             </div>
                         </div>
+                        <x-input-error for="cantidadAVender" class="mt-1" />
                     </div>
                 @endif
             </div>
@@ -84,11 +86,17 @@
     <x-confirmation-modal wire:model.live="modalConfirmVenta">
         <x-slot name="title">Confirmar Pago</x-slot>
         <x-slot name="content">
+            @error('carrito')
+                <div class="mb-3 text-sm text-red-600">{{ $message }}</div>
+            @enderror
             ¿Desea finalizar la venta por un total de <span class="font-bold text-lg">${{ number_format($totalVenta, 2) }}</span>?
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('modalConfirmVenta', false)">Revisar</x-secondary-button>
-            <x-button wire:click="guardarVenta" class="ml-3 bg-green-600">Cobrar Ahora</x-button>
+            <x-secondary-button wire:click="$set('modalConfirmVenta', false)" wire:loading.attr="disabled" wire:target="guardarVenta">Revisar</x-secondary-button>
+            <x-button wire:click="guardarVenta" wire:loading.attr="disabled" wire:target="guardarVenta" class="ml-3 bg-green-600">
+                <span wire:loading.remove wire:target="guardarVenta">Cobrar Ahora</span>
+                <span wire:loading wire:target="guardarVenta">Procesando compra...</span>
+            </x-button>
         </x-slot>
     </x-confirmation-modal>
 
@@ -98,7 +106,7 @@
             
             <div class="lg:col-span-2 space-y-4">
                 <div class="bg-white p-6 rounded-lg shadow-sm border">
-                    <x-input type="text" class="w-full mb-4" placeholder="Buscar producto por nombre..." wire:model.live="buscador" />
+                    <x-input type="text" class="w-full mb-4" placeholder="Buscar producto por nombre..." wire:model.live.debounce.400ms="buscador" />
                     
                     <x-table>
                         <x-slot name="thead">
@@ -131,13 +139,13 @@
                 
                 {{--Clientes--}}
                 <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-indigo-500 mb-6">
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                         <h3 class="font-bold text-gray-700 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                             Facturación
                         </h3>
                         
-                        <div class="flex bg-gray-100 p-1 rounded-lg">
+                        <div class="grid grid-cols-2 sm:flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto gap-1 sm:gap-0">
                             <button wire:click="$set('tipoCliente', 'registrado')" 
                                 class="px-3 py-1 text-xs font-bold rounded-md {{ $tipoCliente == 'registrado' ? 'bg-white shadow text-indigo-600' : 'text-gray-500' }}">
                                 Registrado
@@ -153,7 +161,8 @@
                         <div class="space-y-3">
                             <div>
                                 <x-label value="Buscar Cliente (Nombre o DUI)" />
-                                <x-input type="text" wire:model.live="busquedaCliente" class="w-full text-sm" placeholder="Ej: Juan Pérez o 00000000-0" />
+                                <x-input type="text" wire:model.live.debounce.400ms="busquedaCliente" class="w-full text-sm" placeholder="Ej: Juan Pérez o 00000000-0" />
+                                <x-input-error for="clienteId" class="mt-1" />
                             </div>
 
                             @if($busquedaCliente != '')
@@ -174,6 +183,7 @@
                         <div class="animate-fadeIn">
                             <x-label value="Correo para Factura Electrónica (Opcional)" />
                             <x-input type="email" wire:model="emailFacturacion" class="w-full text-sm" placeholder="correo@cliente.com" />
+                            <x-input-error for="emailFacturacion" class="mt-1" />
                             <div class="mt-2 p-2 bg-blue-50 rounded border border-blue-100">
                                 <p class="text-[10px] text-blue-700 leading-tight uppercase font-bold">
                                     Modo: Consumidor Final / Cliente no registrado
@@ -183,9 +193,12 @@
                     @endif
                 </div>
 
-                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-indigo-600 sticky top-6">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-indigo-600 lg:sticky lg:top-6">
                     <h3 class="font-black text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">Ticket de Venta</h3>
                     <div class="space-y-4 mb-6">
+                        @error('carrito')
+                            <div class="text-sm text-red-600">{{ $message }}</div>
+                        @enderror
                         @forelse($carrito as $indice => $item)
                             <div class="flex justify-between items-start text-sm">
                                 <div class="flex-1">
@@ -224,9 +237,17 @@
 
     <script>
         document.addEventListener('livewire:initialized', () => {
-        @this.on('abrir-ticket', (event) => {
-            window.open('/recibo/' + event.id + '/pdf', '_blank');
-        });
+            window.addEventListener('abrir-ticket', (event) => {
+                window.open('/recibo/' + event.detail.id + '/pdf', '_blank');
+            });
         });
     </script>
+
+    <div wire:loading.flex wire:target="guardarVenta" class="fixed inset-0 z-[100] items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl px-8 py-6 text-center max-w-sm w-[90%]">
+            <div class="mx-auto mb-4 h-10 w-10 rounded-full border-4 border-gray-200 border-t-indigo-600 animate-spin"></div>
+            <p class="text-lg font-bold text-gray-800">Procesando compra...</p>
+            <p class="text-sm text-gray-500 mt-1">Generando ticket y enviando correo con PDF</p>
+        </div>
+    </div>
 </div>

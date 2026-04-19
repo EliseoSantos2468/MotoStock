@@ -48,7 +48,6 @@
             </h1>
             
             <p class="text-lg text-slate-500 max-w-lg mx-auto mb-12 leading-relaxed">
-                Hemos optimizado cada proceso para que tu flujo de trabajo sea más fluido, rápido y eficiente que nunca.
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -64,10 +63,8 @@
             <footer class="mt-24 pt-8 border-t border-slate-100">
                 <div class="flex items-center justify-center gap-8">
                     <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <span class="text-xs font-medium text-slate-400 tracking-wide uppercase">Servidores Estables</span>
                     </div>
-                    <span class="text-xs text-slate-300">v2.0.4</span>
+                    <span class="text-xs text-slate-300">v1.0</span>
                 </div>
             </footer>
         </main>

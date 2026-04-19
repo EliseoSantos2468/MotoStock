@@ -7,16 +7,18 @@
 <div class="col-span-2">
     <x-label for="nombre" value="Nombre" />
     <x-input id="nombre" type="text" class="mt-1 block w-full" placeholder="ingrese el nombre del producto" wire:model="nombre_producto" />
+    <x-input-error for="nombre_producto" class="mt-1" />
 </div>
 
 <div class="col-span-2">
     <x-label for="descripcion" value="Descripcion" />
     <textarea class="w-full" name="" id="descripcion" wire:model="descripcion_producto"></textarea>
+    <x-input-error for="descripcion_producto" class="mt-1" />
 </div>
 
-<fieldset class="col-span-2 border-2 border-black/30 rounded-xl p-6">
+<fieldset class="col-span-2 border-2 border-black/30 rounded-xl p-4 sm:p-6">
     <legend>Marcas</legend>
-    <div class="grid grid-cols-2 gap-2">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
             <x-label for="marca" value="Marca" />
             <select name="" id="marca" class="rounded-md cursor-pointer w-full" wire:model="idMarca">
@@ -25,24 +27,28 @@
                     <option value="{{$marca->id}}">{{$marca->nombre_marca}}</option>
                 @endforeach
             </select>
+            <x-input-error for="idMarca" class="mt-1" />
         </div>
     
         <div>
             <x-label for="cantidad" value="Cantidad" />
             <x-input wire:model="cantidadMarca" class="w-full" type="number" name="" id="cantidad" />
+            <x-input-error for="cantidadMarca" class="mt-1" />
         </div>
     
         <div>
             <x-label for="precioC" value="Precio Cliente" />
             <x-input wire:model="PrecioC" step="0.01" min="0" class="w-full" type="number" name="" id="precioC" />
+            <x-input-error for="PrecioC" class="mt-1" />
         </div>
     
         <div>
             <x-label for="precioM" value="Precio Mayoreo" />
             <x-input wire:model="PrecioM" step="0.01" min="0" class="w-full" type="number" name="" id="precioM" />
+            <x-input-error for="PrecioM" class="mt-1" />
         </div>
     
-        <div>
+        <div class="md:col-span-2">
             <x-button wire:click.prevent="agregarMarca">
                 Agregar Marca
             </x-button>
