@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use App\Models\Configuracion;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,8 +21,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::share('primaryColor', "rgb(71 85 105)");
-        View::share('secondaryColor', "#3b82f6");
+        $primary = "rgb(71 85 105)";
+        $secondary = "#3b82f6";
+
+        try {
+            $config = Configuracion::first();
+            
+            if ($config) {
+                $primary = $config->color_primario;
+                $secondary = $config->color_secundario;
+            }
+        } catch (\Exception $e) {
+        }
+        View::share('primaryColor', $primary);
+        View::share('secondaryColor', $secondary);
+        
         View::share('white', '#ffffff');
         View::share('black', '#000000');
         View::share('btnEditar', '#f59e0b');

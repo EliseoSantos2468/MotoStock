@@ -11,7 +11,7 @@ class VerClientes extends Component
     public Cliente $cliente;
 
     public function mount(Cliente $cliente){
-        $this->$cliente = $cliente;
+        $this->cliente = $cliente;
     }
 
     #[Layout('layouts.app')]

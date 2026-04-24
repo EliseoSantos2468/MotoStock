@@ -1,105 +1,111 @@
 @props([
     'departamentos' => [],
     'municipios' => [],
-    'referencias' => [],
     'id_departamento' => '',
     'id_municipio' => '',
     'form' => '',
-    ])
+])
 
-<div>
-    <x-label for="nombres" value="Nombres" />
-    <x-input id="nombres" type="text" class="mt-1 block w-full" placeholder="ingrese nombres" wire:model="nombres_cliente" />
-</div>
+<div class="w-full rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5" 
+        x-data="{
+            maskDui(val) {
+                return val.replace(/\D/g, '').replace(/^(\d{8})(\d)/, '$1-$2').substr(0, 10);
+            },
+            maskTel(val) {
+                return val.replace(/\D/g, '').replace(/^(\d{4})(\d)/, '$1-$2').substr(0, 9);
+            },
+            maskNit(val) {
+                return val.replace(/\D/g, '').replace(/^(\d{4})(\d{6})(\d{3})(\d)/, '$1-$2-$3-$4').substr(0, 17);
+            },
+            filterName(val) {
+                return val.replace(/[^a-zA-ZñÑáéíóúÁÉÍÓÚ\s]/g, '');
+            }
+        }">
+        
+        {{-- Nombres --}}
+        <div class="md:col-span-1">
+            <x-label for="nombres" value="Nombres" class="font-semibold" />
+            <x-input id="nombres" type="text" class="mt-1 block w-full" placeholder="Nombres del cliente" 
+                x-on:input="$el.value = filterName($el.value)" 
+                wire:model="nombres_cliente" />
+            <x-input-error for="nombres_cliente" class="mt-1" />
+        </div>
 
-<div>
-    <x-label for="apellidos" value="Apellidos" />
-    <x-input id="apellidos" type="text" class="mt-1 block w-full" placeholder="ingrese apellidos" wire:model="apellidos_cliente" />
-</div>
+        {{-- Apellidos --}}
+        <div class="md:col-span-1">
+            <x-label for="apellidos" value="Apellidos" class="font-semibold" />
+            <x-input id="apellidos" type="text" class="mt-1 block w-full" placeholder="Apellidos del cliente" 
+                x-on:input="$el.value = filterName($el.value)" 
+                wire:model="apellidos_cliente" />
+            <x-input-error for="apellidos_cliente" class="mt-1" />
+        </div>
 
-<div class="{{ $form == 'editar' ? 'hidden' : '' }}">
-    <x-label for="dui" value="DUI" />
-    <x-input id="dui" type="text" class="mt-1 block w-full" placeholder="00000000-0" wire:model="dui_cliente"/>
-</div>
+        {{-- DUI --}}
+        <div class="md:col-span-1">
+            <x-label for="dui" value="DUI" class="font-semibold" />
+            <x-input id="dui" type="text" class="mt-1 block w-full" placeholder="00000000-0" 
+                x-on:input="$el.value = maskDui($el.value)" 
+                wire:model.blur="dui_cliente"/>
+            <x-input-error for="dui_cliente" class="mt-1" />
+        </div>
 
-<div>
-    <x-label for="telefono" value="Telefono" />
-    <x-input id="telefono" type="text" class="mt-1 block w-full" placeholder="7777-7777" wire:model="telefono_cliente" />
-</div>
+        {{-- Telefono --}}
+        <div class="md:col-span-1">
+            <x-label for="telefono" value="Teléfono" class="font-semibold" />
+            <x-input id="telefono" type="text" class="mt-1 block w-full" placeholder="0000-0000" 
+                x-on:input="$el.value = maskTel($el.value)" 
+                wire:model.blur="telefono_cliente" />
+            <x-input-error for="telefono_cliente" class="mt-1" />
+        </div>
 
-<div class="{{ $form == 'editar' ? 'hidden' : '' }}">
-    <x-label for="nit" value="Nit" />
-    <x-input id="nit" type="number" class="mt-1 block w-full" placeholder="ingrese nit" wire:model="nit_cliente" />
-</div>
+        {{-- NIT --}}
+        <div class="md:col-span-1 {{ $form == 'editar' ? 'hidden' : '' }}">
+            <x-label for="nit" value="NIT" class="font-semibold" />
+            <x-input id="nit" type="text" class="mt-1 block w-full" placeholder="0000-000000-000-0" 
+                x-on:input="$el.value = maskNit($el.value)" 
+                wire:model.blur="nit_cliente" />
+            <x-input-error for="nit_cliente" class="mt-1" />
+        </div>
 
-<div class="{{ $form == 'editar' ? 'hidden' : '' }}">
-    <x-label for="correo" value="Correo" />
-    <x-input id="correo" type="email" class="mt-1 block w-full" placeholder="ingrese correo" wire:model="email_cliente" />
-</div>
+        {{-- Correo --}}
+        <div class="md:col-span-1 {{ $form == 'editar' ? 'hidden' : '' }}">
+            <x-label for="correo" value="Correo" class="font-semibold" />
+            <x-input id="correo" type="email" class="mt-1 block w-full" placeholder="correo@ejemplo.com" 
+                wire:model="email_cliente" />
+            <x-input-error for="email_cliente" class="mt-1" />
+        </div>
 
-<div>
-    <x-label for="barrio" value="Barrio" />
-    <x-input id="barrio" type="text" class="mt-1 block w-full" placeholder="ingrese direccion" wire:model="barrio" />
-</div>
+        {{-- Barrio --}}
+        <div class="md:col-span-2">
+            <x-label for="barrio" value="Barrio / Dirección Completa" class="font-semibold" />
+            <x-input id="barrio" type="text" class="mt-1 block w-full" placeholder="Ej: Barrio El Centro, Ave. Independencia #12" 
+                wire:model="barrio" />
+            <x-input-error for="barrio" class="mt-1" />
+        </div>
 
-<div>
-    <x-label for="departamento" value="Departamento" />
-    <select name="" id="departamento" wire:model.live="id_departamento" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-        <option value="" selected disabled>Seleccione un departamento</option>
-        @foreach ($departamentos as $departamento)
-            <option value="{{$departamento->id}}" {{$id_departamento == $departamento->id ? 'selected' : ''}}>
-                {{$departamento->nombre_departamento}}
-            </option>
-        @endforeach
-    </select>
-</div>
+        {{-- Departamento --}}
+        <div class="md:col-span-1">
+            <x-label for="departamento" value="Departamento" class="font-semibold" />
+            <select wire:model.live="id_departamento" class="mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                <option value="" selected disabled>Seleccione departamento</option>
+                @foreach ($departamentos as $departamento)
+                    <option value="{{$departamento->id}}">{{$departamento->nombre_departamento}}</option>
+                @endforeach
+            </select>
+            <x-input-error for="id_departamento" class="mt-1" />
+        </div>
 
-<div class="md:col-span-2">
-    <x-label for="municipio" value="Municipio" />
-    <select name="" id="municipio" wire:model="id_municipio" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-        <option value="" selected disabled>Seleccione un municipio</option>
-        @foreach ($municipios as $municipio)
-            <option value="{{$municipio->id}}" {{$id_municipio == $municipio->id ? 'selected' : ''}}>
-                {{$municipio->nombre_municipio}}
-            </option>
-        @endforeach
-    </select>
-</div>
-
-<div class="md:col-span-2">
-    <x-label for="referencias" value="Referencias" />
-    <div id="referencias" class="flex gap-2 justify-between">
-        <x-input wire:model="ref_nombre" type="text" name="" id="" placeholder="Nombre referencia" class="w-full"/>
-        <x-input wire:model="ref_telefono" type="number" name="" id="" placeholder="Telefono referencia" class="w-full"/>
-        <a href="" wire:click.prevent='agregarReferencia' class="bg-red-500 items-center text-white/80 hover:text-white rounded-full">
-            <svg
-            class="w-10 h-10"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            >
-            <path d="M12 5l0 14" />
-            <path d="M5 12l14 0" />
-            </svg>
-        </a>
+        {{-- Municipio --}}
+        <div class="md:col-span-1">
+            <x-label for="municipio" value="Municipio" class="font-semibold" />
+            <select wire:model="id_municipio" class="mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                <option value="" selected disabled>Seleccione municipio</option>
+                @foreach ($municipios as $municipio)
+                    <option value="{{$municipio->id}}">{{$municipio->nombre_municipio}}</option>
+                @endforeach
+            </select>
+            <x-input-error for="id_municipio" class="mt-1" />
+        </div>
     </div>
-</div>
-
-<div class="md:col-span-2 flex flex-col gap-2 ">
-    @if ($referencias)
-        @foreach ($referencias as $index => $referencia)
-        <div class="w-full p-3 bg-slate-600 text-white rounded-md flex flex-row gap-3 items-center justify-between">
-            <p>{{$index+1}}</p>
-            <p><strong>Nombre: </strong>{{$referencia['nombre_ref']}}</p>
-            <p><strong>Telefono: </strong>{{$referencia['telefono_ref']}}</p>
-            <x-btn-eliminar wire:click='eliminarReferencia({{$index}})' />    
-         </div>
-        @endforeach
-    @else
-        <p class="w-full text-gray-600 font-bold text-center">No hay referencias disponibles</p>
-    @endif
 </div>

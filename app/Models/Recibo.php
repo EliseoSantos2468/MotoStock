@@ -20,7 +20,7 @@ class Recibo extends Model
 
     public function productos(){
         return $this->belongsToMany(Producto::class, 'producto_recibo')
-                    ->withPivot('cantidad')
+                    ->withPivot('cantidad', 'precio_unitario')
                     ->withTimestamps();
     }
 }

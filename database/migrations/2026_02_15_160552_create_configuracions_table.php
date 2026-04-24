@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('recibos', function (Blueprint $table) {
+        Schema::create('configuraciones', function (Blueprint $table) {
             $table->id();
-            $table->date('fecha');
-            $table->decimal('total',8 , 2);
-            $table->unsignedBigInteger('id_cliente')->nullable();
-            $table->string('email_invitado')->nullable();
+            $table->string('color_primario')->default('#1D4ED8');
+            $table->string('color_secundario')->default('#93C5FD');
+            $table->string('correo_empresa')->nullable();
             $table->timestamps();
-
-            $table->foreign('id_cliente')->references('id')->on('cliente')->onDelete('cascade');
         });
     }
 
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('recibo');
+        Schema::dropIfExists('configuracions');
     }
 };

@@ -1,5 +1,9 @@
-<div>
-
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Lista de Clientes') }}
+        </h2>
+    </x-slot>
     {{-- modales --}}
     <x-action-message class="mr-3" on="cliente-guardado">
         {{ __('¡Cliente guardado con éxito!') }}
@@ -11,7 +15,7 @@
         {{ __('¡Cliente Editado con éxito!') }}
     </x-action-message>
     {{-- modal cliente --}}
-    <x-dialog-modal wire:model.live="modalCliente">
+    <x-dialog-modal wire:model.live="modalCliente" maxWidth="4xl">
         @if ($form == 'crear')            
             <x-slot name="title">
                 {{ __('Nuevo Cliente') }}
@@ -23,12 +27,11 @@
         @endif
 
         <x-slot name="content">
-            <form id="form-{{$form}}-cliente" wire:submit="{{$form}}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="form-{{$form}}-cliente" wire:submit.prevent="{{$form}}" class="mx-auto w-full max-w-4xl grid grid-cols-1 gap-4">
 
                 <x-form-clientes 
                     :departamentos="$departamentos" 
                     :municipios="$municipios" 
-                    :referencias="$referencias" 
                     :id_departamento="$id_departamento"
                     :id_municipio="$id_municipio"
                     :form="$form"
@@ -37,16 +40,16 @@
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="cerrarModal">
+            <x-secondary-button wire:click="cerrarModal" class="w-full sm:w-auto justify-center">
                 Cancelar
             </x-secondary-button>
             
             @if ($form == 'crear')            
-                <x-button wire:click="abrirConfirmacion" class="ml-3">
+                <x-button wire:click="abrirConfirmacion" class="w-full sm:w-auto sm:ml-3 justify-center">
                     Guardar Cliente
                 </x-button>
             @else      
-                <x-button wire:click="abrirConfirmacion" class="ml-3">
+                <x-button wire:click="abrirConfirmacion" class="w-full sm:w-auto sm:ml-3 justify-center">
                     Editar Cliente
                 </x-button>
             @endif
@@ -72,11 +75,11 @@
                 </x-secondary-button>
 
                 @if ($form)                    
-                    <x-button type="submit" form="form-{{$form}}-cliente" class="ml-3">
+                    <x-button type="button" wire:click="{{$form}}" class="ml-3">
                         Si
                     </x-button>
                 @else
-                    <x-button type="submit" wire:click="delete" class="ml-3">
+                    <x-button type="button" wire:click="delete" class="ml-3">
                         Si
                     </x-button>
                 @endif
@@ -89,29 +92,21 @@
     {{-- fin modales --}}
 
 
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Lista de Clientes') }}
-        </h2>
-    </x-slot>
-
-    <div class="mb-5 flex justify-between">
+    <div class="mb-5 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         
-        <div>
-            <x-input type="text" placeholder="Buscar" wire:model.live="buscador"/>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <x-input type="text" placeholder="Buscar" wire:model.live.debounce.400ms="buscador" class="w-full sm:w-64"/>
 
-            <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" 
+            <select class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full sm:w-auto" 
                     name="filtro" 
                     wire:model.live="filtro">
-
                 <option value="nombres_cliente" selected>Nombre</option>
                 <option value="dui_cliente">DUI</option>
                 <option value="id">ID</option>
-
             </select>
         </div>
 
-        <x-btn-crear wire:click="crearCliente">
+        <x-btn-crear wire:click="crearCliente" class="w-full md:w-auto justify-center">
             Cliente
         </x-btn-crear>
     </div>

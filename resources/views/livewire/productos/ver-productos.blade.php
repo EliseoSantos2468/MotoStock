@@ -14,14 +14,14 @@
     {{-- Card Principal del Producto --}}
     <div class="bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
         {{-- Encabezado con Nombre del Repuesto --}}
-        <div class="bg-gradient-to-r from-slate-700 to-slate-900 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-2xl font-bold text-white flex items-center">
+        <div class="bg-gradient-to-r from-slate-700 to-slate-900 px-6 py-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center">
                 <svg class="w-8 h-8 mr-3 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
                 {{ $producto->nombre_producto }}
             </h2>
-            <span class="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-semibold">
+            <span class="self-start sm:self-auto bg-white/20 text-white px-3 py-1 rounded-full text-sm font-semibold">
                 ID: #{{ $producto->id }}
             </span>
         </div>

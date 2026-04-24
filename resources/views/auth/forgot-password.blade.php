@@ -16,7 +16,7 @@
 
         <x-validation-errors class="mb-4" />
 
-        <form method="POST" action="{{ route('password.email') }}">
+        <form method="POST" action="{{ route('password.email') }}" class="mx-auto w-full max-w-sm space-y-4">
             @csrf
 
             <div class="block">
@@ -24,8 +24,8 @@
                 <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             </div>
 
-            <div class="flex items-center justify-end mt-4">
-                <x-button>
+            <div class="flex justify-center sm:justify-end">
+                <x-button class="w-full sm:w-auto justify-center">
                     {{ __('Email Password Reset Link') }}
                 </x-button>
             </div>

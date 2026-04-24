@@ -52,32 +52,4 @@ class Cliente extends Model
     public function credito(){
         return $this->hasMany(Credito::class);
     }
-
-    // Método para actualizar un cliente
-    public function actualizar(Request $request, $id)
-    {
-        // Validación de los datos
-        $validatedData = $request->validate([
-            'nombres_cliente' => 'required|string|max:255',
-            'apellidos_cliente' => 'required|string|max:255',
-            'dui_cliente' => 'required|string|max:10',
-            'telefono_cliente' => 'required|string|max:15',
-            'nit_cliente' => 'required|string|max:20',
-            'email_cliente' => 'required|email|max:255',
-            'monto_max' => 'required|numeric',
-            'barrio' => 'nullable|string|max:255',
-            'id_clasificacion' => 'required|exists:clasificaciones,id', // Ejemplo de validación
-            'id_departamento' => 'required|exists:departamentos,id',
-            'id_municipio' => 'required|exists:municipios,id',
-        ]);
-
-        // Encontrar el cliente por ID
-        $cliente = Cliente::findOrFail($id);
-
-        // Actualizar los datos del cliente
-        $cliente->update($validatedData);
-
-        // Redirigir a una vista o mostrar un mensaje de éxito
-        return redirect()->route('clientes.index')->with('success', 'Cliente actualizado exitosamente');
-    }
 }
