@@ -14,7 +14,9 @@
     <div class="header">
         <strong>MOTO STOCK.</strong><br>
         San Miguel, El Salvador<br>
-        NIT: 0000-000000-000-0
+        @if($recibo->cliente)
+            DUI: {{ $recibo->cliente->dui_cliente }}
+        @endif
     </div>
 
     <div class="linea"></div>
@@ -22,6 +24,9 @@
         Ticket: #{{ $recibo->id }}<br>
         Fecha: {{ $recibo->fecha }}<br>
         Cliente: {{ $recibo->cliente ? $recibo->cliente->nombres_cliente : 'Público General' }}<br>
+        @if($recibo->cliente)
+            DUI: {{ $recibo->cliente->dui_cliente }}<br>
+        @endif
         @if($recibo->email_invitado) Email: {{ $recibo->email_invitado }} @endif
     </p>
     <div class="linea"></div>

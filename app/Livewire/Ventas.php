@@ -8,6 +8,7 @@ use App\Models\Marca;
 use App\Models\Producto;
 use App\Models\Recibo;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
@@ -64,11 +65,10 @@ class Ventas extends Component
      * Busca clientes con debounce automático (Livewire lo maneja)
      * Se ejecuta solo cuando cambia busquedaCliente, no en cada render
      */
-    #[\Livewire\Attributes\On('update:busquedaCliente')]
-    public function actualizarListaClientes()
+    public function updatedBusquedaCliente($value)
     {
         if ($this->tipoCliente == 'registrado') {
-            $busquedaCliente = trim((string) $this->busquedaCliente);
+            $busquedaCliente = trim((string) $value);
             if ($busquedaCliente !== '') {
                 $this->listaClientesCacheada = Cliente::where(function ($query) use ($busquedaCliente) {
                     $search = '%' . Str::lower($busquedaCliente) . '%';
@@ -77,6 +77,7 @@ class Ventas extends Component
                         ->orWhereRaw('LOWER(apellidos_cliente) LIKE ?', [$search])
                         ->orWhereRaw('LOWER(dui_cliente) LIKE ?', [$search]);
                 })
+                    ->where('user_id', Auth::id())
                     ->take(5)
                     ->get();
             } else {
@@ -116,7 +117,11 @@ class Ventas extends Component
     public function agregarAlCarrito()
     {
         $this->validate([
-            'marcaSeleccionada' => ['required', 'integer', Rule::exists('marca', 'id')],
+            'marcaSeleccionada' => [
+                'required',
+                'integer',
+                Rule::exists('marca', 'id')->where('user_id', Auth::id()),
+            ],
             'cantidadAVender' => ['required', 'integer', 'min:1'],
         ], [
             'marcaSeleccionada.required' => 'Selecciona una marca.',
@@ -200,7 +205,11 @@ class Ventas extends Component
 
         if ($this->tipoCliente == 'registrado') {
             $this->validate([
-                'clienteId' => ['required', 'integer', Rule::exists('cliente', 'id')],
+                'clienteId' => [
+                    'required',
+                    'integer',
+                    Rule::exists('cliente', 'id')->where('user_id', Auth::id()),
+                ],
             ], [
                 'clienteId.required' => 'Seleccione un cliente registrado.',
                 'clienteId.exists' => 'El cliente seleccionado no existe.',
@@ -291,7 +300,7 @@ class Ventas extends Component
             $this->resetErrorBag();
 
             $this->dispatch('venta-realizada');
-            $this->dispatch('abrir-ticket', id: $idGenerado);
+            $this->dispatch('abrir-ticket', url: route('recibo.pdf', $idGenerado));
         } catch (\Exception $e) {
             session()->flash('error', 'Ocurrió un error al procesar la venta: ' . $e->getMessage());
         }
@@ -299,7 +308,8 @@ class Ventas extends Component
 
     public function updatedTipoCliente()
     {
-        $this->reset(['clienteId', 'emailFacturacion']);
+        $this->reset(['clienteId', 'emailFacturacion', 'busquedaCliente']);
+        $this->listaClientesCacheada = [];
         $this->resetErrorBag();
     }
 

@@ -10,6 +10,12 @@
         {{ __('Venta procesada con éxito!') }}
     </x-action-message>
 
+    @if (session()->has('error'))
+        <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Modales --}}
     <x-dialog-modal wire:model.live="modalSeleccion">
         <x-slot name="title">Configurar Producto</x-slot>
@@ -171,7 +177,7 @@
                                         <div wire:click="$set('clienteId', {{ $cliente->id }}); $set('busquedaCliente', '{{ $cliente->nombres_cliente }} {{ $cliente->apellidos_cliente }}')" 
                                             class="p-2 text-sm hover:bg-indigo-50 cursor-pointer {{ $clienteId == $cliente->id ? 'bg-indigo-100' : '' }}">
                                             <p class="font-bold">{{ $cliente->nombres_cliente }} {{ $cliente->apellidos_cliente }}</p>
-                                            <p class="text-xs text-gray-500">DUI: {{ $cliente->dui_cliente }} | NIT: {{ $cliente->nit_cliente }}</p>
+                                            <p class="text-xs text-gray-500">DUI: {{ $cliente->dui_cliente }}</p>
                                         </div>
                                     @empty
                                         <p class="p-2 text-xs text-gray-500">No se encontraron clientes.</p>
@@ -238,7 +244,9 @@
     <script>
         document.addEventListener('livewire:initialized', () => {
             window.addEventListener('abrir-ticket', (event) => {
-                window.open('/recibo/' + event.detail.id + '/pdf', '_blank');
+                if (event.detail.url) {
+                    window.open(event.detail.url, '_blank');
+                }
             });
         });
     </script>

@@ -1,17 +1,18 @@
 <nav x-data="{ open: false }" class="shadow-md transition-colors duration-300" style="background-color: {{$primaryColor}};">
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-20"> <div class="flex items-center">
-                <button id="mobile-menu-btn" class="md:hidden mr-4 p-2 rounded-md text-white focus:outline-none hover:bg-white hover:bg-opacity-10 transition-colors">
+        <div class="relative flex items-center justify-between h-20">
+            <div class="flex items-center">
+                <button id="mobile-menu-btn" class="md:hidden mr-2 p-2 rounded-md text-white focus:outline-none hover:bg-white hover:bg-opacity-10 transition-colors">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
+            </div>
 
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <img src="{{ asset('img/logo.png') }}" alt="MotoStock Logo" class="h-24 w-auto rounded-md p-1">
-                    </a>
-                </div>
+            <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center">
+                <a href="{{ route('dashboard') }}" class="flex items-center justify-center">
+                    <img src="{{ asset('img/motoreplogo-removebg-preview.png') }}" alt="MotoRep Logo" class="h-12 sm:h-14 w-auto object-contain">
+                </a>
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">

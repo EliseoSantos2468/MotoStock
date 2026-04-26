@@ -61,7 +61,7 @@ class ListaProductos extends Component
     public $nombre_producto;
     public $descripcion_producto;
     public $marcas_nuevas = [];
-    public $idMarca = 0;
+    public $idMarca = '';
     public $cantidadMarca = 0;
     public $PrecioC = 0;
     public $PrecioM = 0;
@@ -233,7 +233,11 @@ class ListaProductos extends Component
 
     public function agregarMarca(){
         $this->validate([
-            'idMarca' => 'required|integer|exists:marca,id',
+            'idMarca' => [
+                'required',
+                'integer',
+                Rule::exists('marca', 'id')->where('user_id', Auth::id()),
+            ],
             'cantidadMarca' => 'required|integer|min:1',
             'PrecioC' => 'required|numeric|min:0',
             'PrecioM' => 'required|numeric|min:0',

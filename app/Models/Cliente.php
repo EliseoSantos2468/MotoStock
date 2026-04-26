@@ -17,7 +17,6 @@ class Cliente extends Model
         'apellidos_cliente',
         'dui_cliente',
         'telefono_cliente',
-        'nit_cliente',
         'email_cliente',
         'monto_max',
         'barrio',

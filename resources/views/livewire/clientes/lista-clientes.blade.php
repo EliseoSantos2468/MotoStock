@@ -27,7 +27,31 @@
         @endif
 
         <x-slot name="content">
-            <form id="form-{{$form}}-cliente" wire:submit.prevent="{{$form}}" class="mx-auto w-full max-w-4xl grid grid-cols-1 gap-4">
+            <form id="form-{{$form}}-cliente" wire:submit.prevent="abrirConfirmacion" class="mx-auto w-full max-w-4xl grid grid-cols-1 gap-4">
+                <div wire:loading.flex wire:target="abrirConfirmacion,crear,editar" class="col-span-full items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+                    <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    Procesando validación o guardado...
+                </div>
+
+                @if (session()->has('error'))
+                    <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="col-span-full rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <p class="font-semibold mb-2">Corrige los siguientes campos:</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 <x-form-clientes 
                     :departamentos="$departamentos" 
@@ -40,17 +64,31 @@
             </form>
         </x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="cerrarModal" class="w-full sm:w-auto justify-center">
+            <x-secondary-button type="button" wire:click="cerrarModal" class="w-full sm:w-auto justify-center">
                 Cancelar
             </x-secondary-button>
             
             @if ($form == 'crear')            
-                <x-button wire:click="abrirConfirmacion" class="w-full sm:w-auto sm:ml-3 justify-center">
-                    Guardar Cliente
+                <x-button type="submit" form="form-{{$form}}-cliente" wire:loading.attr="disabled" wire:target="abrirConfirmacion" class="w-full sm:w-auto sm:ml-3 justify-center">
+                    <span wire:loading.remove wire:target="abrirConfirmacion">Guardar Cliente</span>
+                    <span wire:loading wire:target="abrirConfirmacion" class="inline-flex items-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Verificando...
+                    </span>
                 </x-button>
             @else      
-                <x-button wire:click="abrirConfirmacion" class="w-full sm:w-auto sm:ml-3 justify-center">
-                    Editar Cliente
+                <x-button type="submit" form="form-{{$form}}-cliente" wire:loading.attr="disabled" wire:target="abrirConfirmacion" class="w-full sm:w-auto sm:ml-3 justify-center">
+                    <span wire:loading.remove wire:target="abrirConfirmacion">Editar Cliente</span>
+                    <span wire:loading wire:target="abrirConfirmacion" class="inline-flex items-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Verificando...
+                    </span>
                 </x-button>
             @endif
 
@@ -70,17 +108,31 @@
             </x-slot>
 
             <x-slot name="footer">
-                <x-secondary-button wire:click="cerrarConfirmacion">
+                <x-secondary-button type="button" wire:click="cerrarConfirmacion" wire:loading.attr="disabled" wire:target="crear,editar">
                     No
                 </x-secondary-button>
 
                 @if ($form)                    
-                    <x-button type="button" wire:click="{{$form}}" class="ml-3">
-                        Si
+                    <x-button type="button" wire:click="{{$form}}" wire:loading.attr="disabled" wire:target="{{$form}}" class="ml-3">
+                        <span wire:loading.remove wire:target="{{$form}}">Si</span>
+                        <span wire:loading wire:target="{{$form}}" class="inline-flex items-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            Guardando...
+                        </span>
                     </x-button>
                 @else
-                    <x-button type="button" wire:click="delete" class="ml-3">
-                        Si
+                    <x-button type="button" wire:click="delete" wire:loading.attr="disabled" wire:target="delete" class="ml-3">
+                        <span wire:loading.remove wire:target="delete">Si</span>
+                        <span wire:loading wire:target="delete" class="inline-flex items-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            Eliminando...
+                        </span>
                     </x-button>
                 @endif
             </x-slot>

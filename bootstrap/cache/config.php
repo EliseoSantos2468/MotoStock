@@ -1,44 +1,4 @@
 <?php return array (
-  'cors' => 
-  array (
-    'paths' => 
-    array (
-      0 => 'api/*',
-      1 => 'sanctum/csrf-cookie',
-    ),
-    'allowed_methods' => 
-    array (
-      0 => '*',
-    ),
-    'allowed_origins' => 
-    array (
-      0 => '*',
-    ),
-    'allowed_origins_patterns' => 
-    array (
-    ),
-    'allowed_headers' => 
-    array (
-      0 => '*',
-    ),
-    'exposed_headers' => 
-    array (
-    ),
-    'max_age' => 0,
-    'supports_credentials' => false,
-  ),
-  'view' => 
-  array (
-    'paths' => 
-    array (
-      0 => '/var/www/resources/views',
-    ),
-    'compiled' => '/var/www/storage/framework/views',
-  ),
-  'concurrency' => 
-  array (
-    'default' => 'process',
-  ),
   'broadcasting' => 
   array (
     'default' => 'log',
@@ -95,6 +55,38 @@
       ),
     ),
   ),
+  'concurrency' => 
+  array (
+    'default' => 'process',
+  ),
+  'cors' => 
+  array (
+    'paths' => 
+    array (
+      0 => 'api/*',
+      1 => 'sanctum/csrf-cookie',
+    ),
+    'allowed_methods' => 
+    array (
+      0 => '*',
+    ),
+    'allowed_origins' => 
+    array (
+      0 => '*',
+    ),
+    'allowed_origins_patterns' => 
+    array (
+    ),
+    'allowed_headers' => 
+    array (
+      0 => '*',
+    ),
+    'exposed_headers' => 
+    array (
+    ),
+    'max_age' => 0,
+    'supports_credentials' => false,
+  ),
   'hashing' => 
   array (
     'driver' => 'bcrypt',
@@ -113,20 +105,28 @@
     ),
     'rehash_on_login' => true,
   ),
+  'view' => 
+  array (
+    'paths' => 
+    array (
+      0 => 'C:\\laragon\\www\\MotoStock\\resources\\views',
+    ),
+    'compiled' => 'C:\\laragon\\www\\MotoStock\\storage\\framework\\views',
+  ),
   'app' => 
   array (
-    'name' => 'Laravel',
-    'env' => 'local',
+    'name' => 'MotoStock',
+    'env' => 'production',
     'debug' => false,
-    'url' => 'http://192.168.0.17',
+    'url' => 'http://192.168.1.60',
     'frontend_url' => 'http://localhost:3000',
     'asset_url' => NULL,
     'timezone' => 'UTC',
-    'locale' => 'en',
+    'locale' => 'es',
     'fallback_locale' => 'en',
-    'faker_locale' => 'en_US',
+    'faker_locale' => 'es_ES',
     'cipher' => 'AES-256-CBC',
-    'key' => 'base64:qEaaei0KKg74fOUmwOydDBtzZN7Eydd0FOGdFsHJLvM=',
+    'key' => 'base64:B/cfvUQiEb7q0XLLb3m+cE+7KFGRG1/xrf8l8k9QsFM=',
     'previous_keys' => 
     array (
     ),
@@ -280,8 +280,8 @@
       'file' => 
       array (
         'driver' => 'file',
-        'path' => '/var/www/storage/framework/cache/data',
-        'lock_path' => '/var/www/storage/framework/cache/data',
+        'path' => 'C:\\laragon\\www\\MotoStock\\storage\\framework/cache/data',
+        'lock_path' => 'C:\\laragon\\www\\MotoStock\\storage\\framework/cache/data',
       ),
       'memcached' => 
       array (
@@ -334,7 +334,7 @@
         ),
       ),
     ),
-    'prefix' => 'laravel-cache-',
+    'prefix' => 'motostock-cache-',
   ),
   'database' => 
   array (
@@ -357,11 +357,11 @@
       array (
         'driver' => 'mysql',
         'url' => NULL,
-        'host' => 'db',
+        'host' => '127.0.0.1',
         'port' => '5432',
         'database' => 'motostock',
         'username' => 'postgres',
-        'password' => 'Manobo2468',
+        'password' => 'shadow',
         'unix_socket' => '',
         'charset' => 'utf8mb4',
         'collation' => 'utf8mb4_unicode_ci',
@@ -377,11 +377,11 @@
       array (
         'driver' => 'mariadb',
         'url' => NULL,
-        'host' => 'db',
+        'host' => '127.0.0.1',
         'port' => '5432',
         'database' => 'motostock',
         'username' => 'postgres',
-        'password' => 'Manobo2468',
+        'password' => 'shadow',
         'unix_socket' => '',
         'charset' => 'utf8mb4',
         'collation' => 'utf8mb4_unicode_ci',
@@ -397,11 +397,11 @@
       array (
         'driver' => 'pgsql',
         'url' => NULL,
-        'host' => 'db',
+        'host' => '127.0.0.1',
         'port' => '5432',
         'database' => 'motostock',
         'username' => 'postgres',
-        'password' => 'Manobo2468',
+        'password' => 'shadow',
         'charset' => 'utf8',
         'prefix' => '',
         'prefix_indexes' => true,
@@ -412,11 +412,11 @@
       array (
         'driver' => 'sqlsrv',
         'url' => NULL,
-        'host' => 'db',
+        'host' => '127.0.0.1',
         'port' => '5432',
         'database' => 'motostock',
         'username' => 'postgres',
-        'password' => 'Manobo2468',
+        'password' => 'shadow',
         'charset' => 'utf8',
         'prefix' => '',
         'prefix_indexes' => true,
@@ -433,7 +433,7 @@
       'options' => 
       array (
         'cluster' => 'redis',
-        'prefix' => 'laravel-database-',
+        'prefix' => 'motostock-database-',
         'persistent' => false,
       ),
       'default' => 
@@ -472,7 +472,7 @@
       'local' => 
       array (
         'driver' => 'local',
-        'root' => '/var/www/storage/app/private',
+        'root' => 'C:\\laragon\\www\\MotoStock\\storage\\app/private',
         'serve' => true,
         'throw' => false,
         'report' => false,
@@ -480,8 +480,8 @@
       'public' => 
       array (
         'driver' => 'local',
-        'root' => '/var/www/storage/app/public',
-        'url' => 'http://192.168.0.17/storage',
+        'root' => 'C:\\laragon\\www\\MotoStock\\storage\\app/public',
+        'url' => 'http://192.168.1.60/storage',
         'visibility' => 'public',
         'throw' => false,
         'report' => false,
@@ -502,7 +502,7 @@
     ),
     'links' => 
     array (
-      '/var/www/public/storage' => '/var/www/storage/app/public',
+      'C:\\laragon\\www\\MotoStock\\public\\storage' => 'C:\\laragon\\www\\MotoStock\\storage\\app/public',
     ),
   ),
   'fortify-options' => 
@@ -628,14 +628,14 @@
       'single' => 
       array (
         'driver' => 'single',
-        'path' => '/var/www/storage/logs/laravel.log',
+        'path' => 'C:\\laragon\\www\\MotoStock\\storage\\logs/laravel.log',
         'level' => 'debug',
         'replace_placeholders' => true,
       ),
       'daily' => 
       array (
         'driver' => 'daily',
-        'path' => '/var/www/storage/logs/laravel.log',
+        'path' => 'C:\\laragon\\www\\MotoStock\\storage\\logs/laravel.log',
         'level' => 'debug',
         'days' => 14,
         'replace_placeholders' => true,
@@ -700,13 +700,13 @@
       ),
       'emergency' => 
       array (
-        'path' => '/var/www/storage/logs/laravel.log',
+        'path' => 'C:\\laragon\\www\\MotoStock\\storage\\logs/laravel.log',
       ),
     ),
   ),
   'mail' => 
   array (
-    'default' => 'log',
+    'default' => 'smtp',
     'mailers' => 
     array (
       'smtp' => 
@@ -714,12 +714,12 @@
         'transport' => 'smtp',
         'scheme' => NULL,
         'url' => NULL,
-        'host' => '127.0.0.1',
-        'port' => '2525',
-        'username' => NULL,
-        'password' => NULL,
+        'host' => 'smtp.gmail.com',
+        'port' => '465',
+        'username' => 'motostocksm@gmail.com',
+        'password' => 'vvqpetbejgcwjewm',
         'timeout' => NULL,
-        'local_domain' => '192.168.0.17',
+        'local_domain' => '192.168.1.60',
       ),
       'ses' => 
       array (
@@ -770,15 +770,15 @@
     ),
     'from' => 
     array (
-      'address' => 'hello@example.com',
-      'name' => 'Laravel',
+      'address' => 'motostocksm@gmail.com',
+      'name' => 'MotoStock El Salvador',
     ),
     'markdown' => 
     array (
       'theme' => 'default',
       'paths' => 
       array (
-        0 => '/var/www/resources/views/vendor/mail',
+        0 => 'C:\\laragon\\www\\MotoStock\\resources\\views/vendor/mail',
       ),
     ),
   ),
@@ -868,7 +868,7 @@
       2 => '127.0.0.1',
       3 => '127.0.0.1:8000',
       4 => '::1',
-      5 => '192.168.0.17',
+      5 => '192.168.1.60',
     ),
     'guard' => 
     array (
@@ -914,7 +914,7 @@
     'lifetime' => 120,
     'expire_on_close' => false,
     'encrypt' => false,
-    'files' => '/var/www/storage/framework/sessions',
+    'files' => 'C:\\laragon\\www\\MotoStock\\storage\\framework/sessions',
     'connection' => NULL,
     'table' => 'sessions',
     'store' => NULL,
@@ -923,7 +923,7 @@
       0 => 2,
       1 => 100,
     ),
-    'cookie' => 'laravel-session',
+    'cookie' => 'motostock-session',
     'path' => '/',
     'domain' => NULL,
     'secure' => NULL,
@@ -938,10 +938,10 @@
     'convert_entities' => true,
     'options' => 
     array (
-      'font_dir' => '/var/www/storage/fonts',
-      'font_cache' => '/var/www/storage/fonts',
-      'temp_dir' => '/tmp',
-      'chroot' => '/var/www',
+      'font_dir' => 'C:\\laragon\\www\\MotoStock\\storage\\fonts',
+      'font_cache' => 'C:\\laragon\\www\\MotoStock\\storage\\fonts',
+      'temp_dir' => 'C:\\Users\\EDRASL~1\\AppData\\Local\\Temp',
+      'chroot' => 'C:\\laragon\\www\\MotoStock',
       'allowed_protocols' => 
       array (
         'data://' => 
@@ -989,7 +989,7 @@
   'livewire' => 
   array (
     'class_namespace' => 'App\\Livewire',
-    'view_path' => '/var/www/resources/views/livewire',
+    'view_path' => 'C:\\laragon\\www\\MotoStock\\resources\\views/livewire',
     'layout' => 'components.layouts.app',
     'lazy_placeholder' => NULL,
     'temporary_file_upload' => 

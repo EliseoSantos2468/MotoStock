@@ -15,9 +15,6 @@
             maskTel(val) {
                 return val.replace(/\D/g, '').replace(/^(\d{4})(\d)/, '$1-$2').substr(0, 9);
             },
-            maskNit(val) {
-                return val.replace(/\D/g, '').replace(/^(\d{4})(\d{6})(\d{3})(\d)/, '$1-$2-$3-$4').substr(0, 17);
-            },
             filterName(val) {
                 return val.replace(/[^a-zA-ZñÑáéíóúÁÉÍÓÚ\s]/g, '');
             }
@@ -57,15 +54,6 @@
                 x-on:input="$el.value = maskTel($el.value)" 
                 wire:model.blur="telefono_cliente" />
             <x-input-error for="telefono_cliente" class="mt-1" />
-        </div>
-
-        {{-- NIT --}}
-        <div class="md:col-span-1 {{ $form == 'editar' ? 'hidden' : '' }}">
-            <x-label for="nit" value="NIT" class="font-semibold" />
-            <x-input id="nit" type="text" class="mt-1 block w-full" placeholder="0000-000000-000-0" 
-                x-on:input="$el.value = maskNit($el.value)" 
-                wire:model.blur="nit_cliente" />
-            <x-input-error for="nit_cliente" class="mt-1" />
         </div>
 
         {{-- Correo --}}

@@ -3,6 +3,7 @@
 namespace App\Livewire\Clientes;
 
 use App\Models\Cliente;
+use App\Models\Clasificacion;
 use App\Models\Departamento;
 use App\Models\Municipio;
 use Illuminate\Support\Facades\DB;
@@ -32,10 +33,6 @@ class ListaClientes extends Component
         'dui_cliente.string' => 'El DUI debe ser texto.',
         'dui_cliente.regex' => 'El DUI debe tener el formato 00000000-0.',
         'dui_cliente.unique' => 'El DUI ya está registrado.',
-        'nit_cliente.required' => 'El campo NIT es obligatorio.',
-        'nit_cliente.string' => 'El NIT debe ser texto.',
-        'nit_cliente.regex' => 'El NIT debe tener el formato 0000-000000-000-0 o ser 0.',
-        'nit_cliente.unique' => 'El NIT ya está registrado.',
         'telefono_cliente.required' => 'El campo teléfono es obligatorio.',
         'telefono_cliente.string' => 'El teléfono debe ser texto.',
         'telefono_cliente.regex' => 'El teléfono debe tener el formato 0000-0000.',
@@ -58,7 +55,7 @@ class ListaClientes extends Component
     // datos de clientes
     public $cliente_id;
     public $nombres_cliente, $apellidos_cliente, $dui_cliente, $telefono_cliente;
-    public $nit_cliente, $email_cliente, $barrio;
+    public $email_cliente, $barrio;
     public $id_departamento = '', $id_municipio = '';
 
     // colecciones
@@ -73,29 +70,16 @@ class ListaClientes extends Component
         $isEditing = $id !== null;
 
         $duiRules = ['required', 'string', 'regex:/^\d{8}-\d$/'];
-
-        $nitRules = ['required', 'string', 'regex:/^(0|\d{4}-\d{6}-\d{3}-\d)$/'];
         $emailRules = ['required', 'string', 'email', 'max:255'];
 
         $duiUnique = Rule::unique('cliente', 'dui_cliente')
                         ->where('user_id', Auth::id());
-        $nitUnique = Rule::unique('cliente', 'nit_cliente')
-                        ->where('user_id', Auth::id());
 
         if ($id !== null) {
             $duiUnique->ignore($id);
-            $nitUnique->ignore($id);
         }
 
         $duiRules[] = $duiUnique;
-
-        $nitEvaluado = trim((string) $this->nit_cliente);
-        $nitDigitos = preg_replace('/\D+/', '', $nitEvaluado);
-        $esNitGenerico = $nitEvaluado === '0' || $nitDigitos === '00000000000000';
-
-        if (!$esNitGenerico) {
-            $nitRules[] = $nitUnique;
-        }
 
         $rules = [
             'nombres_cliente' => 'required|string|min:2|max:255|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
@@ -108,7 +92,6 @@ class ListaClientes extends Component
         ];
 
         if (!$isEditing) {
-            $rules['nit_cliente'] = $nitRules;
             $rules['email_cliente'] = $emailRules;
         }
 
@@ -170,10 +153,9 @@ class ListaClientes extends Component
                     'apellidos_cliente' => $this->apellidos_cliente,
                     'dui_cliente'       => $this->dui_cliente,
                     'telefono_cliente'  => $this->telefono_cliente,
-                    'nit_cliente'       => $this->nit_cliente,
                     'email_cliente'     => $this->email_cliente,
                     'monto_max'         => 1000.00,
-                    'id_clasificacion'  => 3,
+                    'id_clasificacion'  => $this->obtenerClasificacionPorDefectoId(),
                     'barrio'            => $this->barrio,
                     'id_departamento'   => $this->id_departamento,
                     'id_municipio'      => $this->id_municipio,
@@ -254,7 +236,7 @@ class ListaClientes extends Component
         $this->reset([
             'form', 'modalCliente', 'modalActualizar', 'modalConfirm', 'cliente_id',
             'id_departamento', 'id_municipio', 'municipios', 'nombres_cliente',
-            'apellidos_cliente', 'dui_cliente', 'telefono_cliente', 'nit_cliente',
+            'apellidos_cliente', 'dui_cliente', 'telefono_cliente',
             'email_cliente', 'barrio'
         ]);
     }
@@ -288,16 +270,29 @@ class ListaClientes extends Component
             $this->dui_cliente = substr($dui, 0, 8) . '-' . substr($dui, 8, 1);
         }
 
-        $nit = preg_replace('/\D+/', '', (string) $this->nit_cliente);
-        if (strlen($nit) >= 14) {
-            $nit = substr($nit, 0, 14);
-            $this->nit_cliente = substr($nit, 0, 4) . '-' . substr($nit, 4, 6) . '-' . substr($nit, 10, 3) . '-' . substr($nit, 13, 1);
-        }
-
         $telefono = preg_replace('/\D+/', '', (string) $this->telefono_cliente);
         if (strlen($telefono) >= 8) {
             $telefono = substr($telefono, 0, 8);
             $this->telefono_cliente = substr($telefono, 0, 4) . '-' . substr($telefono, 4, 4);
         }
+    }
+
+    private function obtenerClasificacionPorDefectoId(): int
+    {
+        $userId = Auth::id();
+
+        $clasificacion = Clasificacion::query()
+            ->where('user_id', $userId)
+            ->orderBy('id')
+            ->first();
+
+        if ($clasificacion) {
+            return (int) $clasificacion->id;
+        }
+
+        return (int) Clasificacion::create([
+            'nombre_clasificacion' => 'Nuevo',
+            'user_id' => $userId,
+        ])->id;
     }
 }
