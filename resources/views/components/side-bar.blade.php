@@ -12,7 +12,7 @@
         <ul class="nav-list primary-nav space-y-2">
             
             <li class="nav-item dropdown-container">
-                <a href="{{ route('dashboard') }}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
+                <a wire:navigate href="{{ route('dashboard') }}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
                     <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 4a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-12z" />
                         <path d="M3 13h18" /> <path d="M8 21h8" /> <path d="M10 17l-.5 4" /> <path d="M14 17l.5 4" />
@@ -44,7 +44,7 @@
             </li>
         
             <li class="nav-item">
-                <a href="{{route('ventas')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
+                <a wire:navigate href="{{route('ventas')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
                     <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
                         <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
@@ -70,7 +70,7 @@
             </li>
 
             <li class="nav-item">
-                <a href="{{route('lista-productos')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
+                <a wire:navigate href="{{route('lista-productos')}}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800">
                 <svg class="w-8 h-8 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
                     <path d="M14 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
@@ -88,7 +88,7 @@
 
         <ul class="nav-list secondary-nav mt-10 pt-10 border-t border-gray-800 space-y-2">
             <li class="nav-item">
-                <a href="{{ route('configuracion') }}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
+                <a wire:navigate href="{{ route('configuracion') }}" class="nav-link flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
                     <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>

@@ -118,28 +118,26 @@ class ListaClientes extends Component
         $this->id_municipio = '';
     }
 
-    #[Layout('layouts.app')]
+#[Layout('layouts.app')]
     public function render()
     {
-        $query = Cliente::with(['clasificacion']);
+        // Eager loading de todas las relaciones necesarias
+        // Agrega departamento, municipio y clasificacion para evitar N+1 queries
+        $clientes = Cliente::with(['clasificacion', 'departamento', 'municipio'])
+            ->when(trim((string) $this->buscador) !== '', function ($query) {
+                $search = '%' . Str::lower(trim((string) $this->buscador)) . '%';
 
-        if (trim((string) $this->buscador) !== '') {
-            $search = '%' . Str::lower(trim((string) $this->buscador)) . '%';
-
-            if ($this->filtro === 'id') {
-                $query->where('id', 'like', '%' . trim((string) $this->buscador) . '%');
-            } else {
-                $column = in_array($this->filtro, ['nombres_cliente', 'dui_cliente'], true) ? $this->filtro : 'nombres_cliente';
-                $query->whereRaw('LOWER(' . $column . ') LIKE ?', [$search]);
-            }
-        }
-
-        if($this->modalCliente && empty($this->departamentos)){
-            $this->departamentos = Departamento::all();
-        }
+                if ($this->filtro === 'id') {
+                    $query->where('id', 'like', '%' . trim((string) $this->buscador) . '%');
+                } else {
+                    $column = in_array($this->filtro, ['nombres_cliente', 'dui_cliente'], true) ? $this->filtro : 'nombres_cliente';
+                    $query->whereRaw('LOWER(' . $column . ') LIKE ?', [$search]);
+                }
+            })
+            ->paginate(10);
 
         return view('livewire.clientes.lista-clientes', [
-            'clientes' => $query->paginate(10)
+            'clientes' => $clientes
         ]);
     }
 

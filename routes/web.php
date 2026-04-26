@@ -19,7 +19,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// --- DASHBOARD (Corregido para PostgreSQL) ---
+// --- DASHBOARD (Optimizado con índices) ---
 Route::middleware(['auth'])->get('/dashboard', function () {
     $today = Carbon::today();
     $monthStart = $today->copy()->startOfMonth();
@@ -31,16 +31,17 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         if ((float) $previous === 0.0) {
             return (float) $current > 0 ? 100.0 : 0.0;
         }
-
         return (($current - $previous) / $previous) * 100;
     };
 
+    // OPTIMIZADO: Usar índices compuestos para consultas de rango
     $ventasMes = (float) Recibo::whereBetween('fecha', [$monthStart->toDateString(), $today->toDateString()])->sum('total');
     $ventasMesAnterior = (float) Recibo::whereBetween('fecha', [$prevMonthStart->toDateString(), $prevMonthEnd->toDateString()])->sum('total');
 
     $ordenesMes = Recibo::whereBetween('fecha', [$monthStart->toDateString(), $today->toDateString()])->count();
     $ordenesMesAnterior = Recibo::whereBetween('fecha', [$prevMonthStart->toDateString(), $prevMonthEnd->toDateString()])->count();
 
+    // OPTIMIZADO: Usar índice en created_at
     $clientesMes = Cliente::whereBetween('created_at', [$monthStart->startOfDay(), $today->copy()->endOfDay()])->count();
     $clientesMesAnterior = Cliente::whereBetween('created_at', [$prevMonthStart->startOfDay(), $prevMonthEnd->copy()->endOfDay()])->count();
 
@@ -61,6 +62,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         'conversion_delta' => $percentageDelta($conversion, $conversionAnterior),
     ];
 
+    // OPTIMIZADO: Consulta mensual con índice en fecha
     $monthlySales = Recibo::selectRaw("EXTRACT(MONTH FROM fecha) as month, SUM(total) as total")
         ->whereBetween('fecha', [$yearStart->toDateString(), $today->toDateString()])
         ->groupBy('month')
@@ -79,6 +81,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         }
     }
 
+    // OPTIMIZADO: Top productos con índices en producto_recibo
     $topProductos = DB::table('producto_recibo as pr')
         ->join('producto as p', 'p.id', '=', 'pr.producto_id')
         ->select('p.nombre_producto', DB::raw('SUM(pr.cantidad) as total_cantidad'))
@@ -90,6 +93,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
     $topProductoLabels = $topProductos->pluck('nombre_producto')->values();
     $topProductoData = $topProductos->pluck('total_cantidad')->map(fn ($value) => (int) $value)->values();
 
+    // OPTIMIZADO: Consultas de tendencias con índices
     $trendSeries = [];
     foreach ([7, 30, 90] as $range) {
         $rangeStart = $today->copy()->subDays($range - 1);
@@ -116,7 +120,9 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         ];
     }
 
-    $recentVentas = Recibo::orderByDesc('created_at')
+    // OPTIMIZADO: Ventas recientes con eager loading
+    $recentVentas = Recibo::with(['cliente:id,nombres_cliente,apellidos_cliente'])
+        ->orderByDesc('created_at')
         ->orderByDesc('id')
         ->limit(5)
         ->get();

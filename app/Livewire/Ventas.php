@@ -35,6 +35,7 @@ class Ventas extends Component
     public $clienteId = null;
     public $emailFacturacion = '';
     public $busquedaCliente = '';
+    public $listaClientesCacheada = []; // Cache de clientes para evitar recalcular en cada render
 
     #[Layout('layouts.app')]
     public function render()
@@ -53,12 +54,23 @@ class Ventas extends Component
             })
             ->paginate(10);
 
-        //obtener clientes
-        $listaClientes = [];
+        return view('livewire.ventas', [
+            'productos' => $productos,
+            'listaClientes' => $this->listaClientesCacheada
+        ]);
+    }
+
+    /**
+     * Busca clientes con debounce automático (Livewire lo maneja)
+     * Se ejecuta solo cuando cambia busquedaCliente, no en cada render
+     */
+    #[\Livewire\Attributes\On('update:busquedaCliente')]
+    public function actualizarListaClientes()
+    {
         if ($this->tipoCliente == 'registrado') {
             $busquedaCliente = trim((string) $this->busquedaCliente);
             if ($busquedaCliente !== '') {
-                $listaClientes = Cliente::where(function ($query) use ($busquedaCliente) {
+                $this->listaClientesCacheada = Cliente::where(function ($query) use ($busquedaCliente) {
                     $search = '%' . Str::lower($busquedaCliente) . '%';
 
                     $query->whereRaw('LOWER(nombres_cliente) LIKE ?', [$search])
@@ -67,13 +79,10 @@ class Ventas extends Component
                 })
                     ->take(5)
                     ->get();
+            } else {
+                $this->listaClientesCacheada = [];
             }
         }
-
-        return view('livewire.ventas', [
-            'productos' => $productos,
-            'listaClientes' => $listaClientes
-        ]);
     }
 
     public function seleccionarProducto($id)

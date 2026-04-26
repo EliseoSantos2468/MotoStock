@@ -147,8 +147,8 @@
 
                 <x-td class="flex justify-end gap-2 text-right text-sm font-medium">
                     <x-btn-editar wire:click="editarProducto({{ $producto->id }})" />
-                    <x-btn-Eliminar wire:click="eliminarProducto({{ $producto->id }})" />
-                    <x-btn-Ver wire:click="show({{ $producto->id }})" />
+                    <x-btn-eliminar wire:click="eliminarProducto({{ $producto->id }})" />
+                    <x-btn-ver wire:click="show({{ $producto->id }})" />
                 </x-td>
             </x-tr>
         @endforeach

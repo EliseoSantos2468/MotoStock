@@ -11,7 +11,8 @@ class VerClientes extends Component
     public Cliente $cliente;
 
     public function mount(Cliente $cliente){
-        $this->cliente = $cliente;
+        // OPTIMIZADO: Eager loading de todas las relaciones necesarias
+        $this->cliente = $cliente->load(['departamento', 'municipio', 'clasificacion', 'recibos.productos']);
     }
 
     #[Layout('layouts.app')]

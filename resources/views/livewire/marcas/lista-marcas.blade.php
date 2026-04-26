@@ -115,7 +115,7 @@
                 <x-td class="text-sm font-medium text-gray-900">{{ $marca->nombre_marca }}</x-td>
                 <x-td class="flex justify-end gap-2 text-right text-sm font-medium">
                         <x-btn-editar wire:click="editarMarca({{ $marca->id }})" />
-                        <x-btn-Eliminar wire:click="eliminarMarca({{ $marca->id }})" />
+                        <x-btn-eliminar wire:click="eliminarMarca({{ $marca->id }})" />
                 </x-td>
             </x-tr>
             @endforeach
