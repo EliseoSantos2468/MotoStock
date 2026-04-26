@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 
 class ListaMarcas extends Component
@@ -163,7 +164,8 @@ class ListaMarcas extends Component
 
     private function reglas(?int $id = null): array
     {
-        $rule = Rule::unique('marca', 'nombre_marca');
+        $rule = Rule::unique('marca', 'nombre_marca')
+                    ->where('user_id', Auth::id());
 
         if ($id !== null) {
             $rule->ignore($id);

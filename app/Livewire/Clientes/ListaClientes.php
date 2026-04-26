@@ -11,6 +11,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\Auth;
 
 class ListaClientes extends Component
 {
@@ -76,8 +77,10 @@ class ListaClientes extends Component
         $nitRules = ['required', 'string', 'regex:/^(0|\d{4}-\d{6}-\d{3}-\d)$/'];
         $emailRules = ['required', 'string', 'email', 'max:255'];
 
-        $duiUnique = Rule::unique('cliente', 'dui_cliente');
-        $nitUnique = Rule::unique('cliente', 'nit_cliente');
+        $duiUnique = Rule::unique('cliente', 'dui_cliente')
+                        ->where('user_id', Auth::id());
+        $nitUnique = Rule::unique('cliente', 'nit_cliente')
+                        ->where('user_id', Auth::id());
 
         if ($id !== null) {
             $duiUnique->ignore($id);
@@ -121,6 +124,11 @@ class ListaClientes extends Component
 #[Layout('layouts.app')]
     public function render()
     {
+        // Cargar departamentos si no están cargados
+        if (empty($this->departamentos)) {
+            $this->departamentos = Departamento::all();
+        }
+
         // Eager loading de todas las relaciones necesarias
         // Agrega departamento, municipio y clasificacion para evitar N+1 queries
         $clientes = Cliente::with(['clasificacion', 'departamento', 'municipio'])
@@ -137,7 +145,9 @@ class ListaClientes extends Component
             ->paginate(10);
 
         return view('livewire.clientes.lista-clientes', [
-            'clientes' => $clientes
+            'clientes' => $clientes,
+            'departamentos' => $this->departamentos,
+            'municipios' => $this->municipios,
         ]);
     }
 

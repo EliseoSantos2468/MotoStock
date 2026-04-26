@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToUser;
 
 
 class Cliente extends Model
 {
+    use BelongsToUser;
+
     protected $table = 'cliente';
 
     protected $fillable = [
@@ -21,6 +24,7 @@ class Cliente extends Model
         'id_clasificacion',
         'id_departamento',
         'id_municipio',
+        'user_id',
     ];
     
     public function clasificacion(){

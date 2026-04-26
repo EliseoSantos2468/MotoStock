@@ -101,6 +101,7 @@ return new class extends Migration
                 $table->index(['producto_id', 'cantidad'], 'pr_producto_cantidad_index');
             }
         });
+    }
 
     /**
      * Reverse the migrations.

@@ -10,6 +10,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ListaProductos extends Component
 {
@@ -87,7 +88,7 @@ class ListaProductos extends Component
             }
         }
 
-        $marcas = Marca::all();
+        $marcas = Marca::all(); // El trait BelongsToUser filtrará automáticamente por usuario
         $productos = $query->paginate(10);
         return view('livewire.productos.lista-productos', compact('productos', 'marcas'));
     }
@@ -318,7 +319,7 @@ class ListaProductos extends Component
             'nombre_producto' => ['required', 'string', 'min:2', 'max:255', $uniqueRule],
             'descripcion_producto' => ['required', 'string', 'min:5', 'max:355'],
             'marcas_nuevas' => ['required', 'array', 'min:1'],
-            'marcas_nuevas.*.idMarca' => ['required', 'integer', 'exists:marca,id'],
+            'marcas_nuevas.*.idMarca' => ['required', 'integer', Rule::exists('marca', 'id')->where('user_id', Auth::id())],
             'marcas_nuevas.*.cantidadMarca' => ['required', 'integer', 'min:1'],
             'marcas_nuevas.*.PrecioC' => ['required', 'numeric', 'min:0'],
             'marcas_nuevas.*.PrecioM' => ['required', 'numeric', 'min:0'],

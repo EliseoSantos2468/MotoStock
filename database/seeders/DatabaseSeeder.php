@@ -17,17 +17,17 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
+        $user = User::factory()->create([
             'email' => 'admin@example.com',
             'password' => 'password123'
         ]);
 
         // seeders
         $this->call([
-            ReferenciasPersonalesSeeder::class,
+            DepartamentoMunicipioSeeder::class,
             ClasificacionSeeder::class,
             InteresSeeder::class,
-            DepartamentoMunicipioSeeder::class,
+            ReferenciasPersonalesSeeder::class,
             MarcaSeeder::class,
             ProductoSeeder::class,
             ProductoMarcaSeeder::class,

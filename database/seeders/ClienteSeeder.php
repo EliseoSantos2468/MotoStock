@@ -13,6 +13,9 @@ class ClienteSeeder extends Seeder
      */
     public function run(): void
     {
+        $user = \App\Models\User::first();
+        if (!$user) return;
+
         DB::table('cliente')->insert([
             [
                 'nombres_cliente' => 'Eliseo Antonio',
@@ -26,6 +29,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 3,
                 'id_departamento' => 1,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -41,6 +45,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 3,
                 'id_departamento' => 1,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -56,6 +61,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 2,
                 'id_departamento' => 2,
                 'id_municipio' => 5,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -71,6 +77,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 1,
                 'id_departamento' => 3,
                 'id_municipio' => 7,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -86,6 +93,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 2,
                 'id_departamento' => 4,
                 'id_municipio' => 9,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -101,6 +109,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 1, // Frecuente
                 'id_departamento' => 12,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -116,6 +125,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 2, // Moroso
                 'id_departamento' => 4,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -131,6 +141,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 3, // Nuevo
                 'id_departamento' => 3,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -146,6 +157,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 1,
                 'id_departamento' => 2,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -161,6 +173,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 3,
                 'id_departamento' => 1,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -176,6 +189,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 2,
                 'id_departamento' => 14,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -191,6 +205,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 1,
                 'id_departamento' => 11,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -206,6 +221,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 3,
                 'id_departamento' => 5,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -221,6 +237,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 1,
                 'id_departamento' => 9,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -236,6 +253,7 @@ class ClienteSeeder extends Seeder
                 'id_clasificacion' => 2,
                 'id_departamento' => 7,
                 'id_municipio' => 1,
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

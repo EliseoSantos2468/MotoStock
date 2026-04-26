@@ -3,14 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToUser;
 
 class Producto extends Model
 {
+    use BelongsToUser;
+
     protected $table='producto';
 
     protected $fillable = [
         'nombre_producto',
         'descripcion_producto',
+        'user_id',
     ];
 
     public function marcas(){
