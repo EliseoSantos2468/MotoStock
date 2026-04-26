@@ -93,23 +93,25 @@ class Ventas extends Component
         $this->modalSeleccion = true;
     }
 
-    public function updatedMarcaSeleccionada($value){
-        if($value && $this->productoSeleccionado){
+    public function updatedMarcaSeleccionada($value)
+    {
+        if ($value && $this->productoSeleccionado) {
             $marca = $this->productoSeleccionado->marcas->where('id', $value)->first();
 
-            if($marca){
+            if ($marca) {
                 $this->stockMaximo = $marca->pivot->cantidad;
 
                 $this->cantidadAVender = ($this->stockMaximo > 0) ? 1 : 0;
             }
-        }else{
+        } else {
             $this->stockMaximo = 0;
             $this->cantidadAVender = 1;
         }
     }
 
-    public function updatedCantidadAVender($value){
-        if($value < 0 && $this->stockMaximo > 0 && $value){
+    public function updatedCantidadAVender($value)
+    {
+        if ($value < 0 && $this->stockMaximo > 0 && $value) {
             $this->cantidadAVender = 1;
         }
     }
@@ -151,15 +153,18 @@ class Ventas extends Component
             return;
         }
 
-        $subtotal = $marcaInfo->pivot->precio_cliente * $this->cantidadAVender;
+        $precio = ($this->cantidadAVender >= $marcaInfo->pivot->cantidad_mayoreo)
+            ? $marcaInfo->pivot->precio_mayoreo
+            : $marcaInfo->pivot->precio_cliente;
 
+        $subtotal = $precio * $this->cantidadAVender;
         // Agregamos al carrito (Array en memoria)
         $this->carrito[] = [
             'producto_id' => $this->productoId,
             'nombre'      => $this->productoSeleccionado->nombre_producto,
             'marca_id'    => $this->marcaSeleccionada,
             'marca'       => $marcaInfo->nombre_marca,
-            'precio'      => $marcaInfo->pivot->precio_cliente,
+            'precio'      => $precio,
             'cantidad'    => $this->cantidadAVender,
             'subtotal'    => $subtotal,
         ];
@@ -313,7 +318,8 @@ class Ventas extends Component
         $this->resetErrorBag();
     }
 
-    public function cerrarModal(){
+    public function cerrarModal()
+    {
         $this->reset([
             'modalSeleccion',
             'productoId',

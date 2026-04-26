@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('apellidos_cliente', length:255);
             $table->string('dui_cliente', length:455);
             $table->string('telefono_cliente', length:455);
-            $table->string('nit_cliente', length:455);
             $table->string('email_cliente', length:455);
             $table->decimal('monto_max', 12, 2);
             $table->string('barrio', length:355);

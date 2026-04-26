@@ -20,6 +20,7 @@ class Producto extends Model
     public function marcas(){
         return $this->belongsToMany(Marca::class, 'producto_marca')
                     ->withPivot('cantidad')
+                    ->withPivot('cantidad_mayoreo')
                     ->withPivot('precio_cliente')
                     ->withPivot('precio_mayoreo')
                     ->withPivot('venta_producto')
