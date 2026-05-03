@@ -111,9 +111,21 @@ class Ventas extends Component
 
     public function updatedCantidadAVender($value)
     {
-        if ($value < 0 && $this->stockMaximo > 0 && $value) {
+        // Normalizar a entero y evitar valores inválidos
+        $valorInt = (int) $value;
+
+        if ($valorInt < 1) {
             $this->cantidadAVender = 1;
+            return;
         }
+
+        if ($this->stockMaximo > 0 && $valorInt > $this->stockMaximo) {
+            // No permitir vender más que el stock disponible
+            $this->cantidadAVender = $this->stockMaximo;
+            return;
+        }
+
+        $this->cantidadAVender = $valorInt;
     }
 
     public function agregarAlCarrito()
