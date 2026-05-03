@@ -30,6 +30,9 @@ class Ventas extends Component
     public $marcaSeleccionada;
     public $cantidadAVender = 1;
     public $stockMaximo = 0;
+    // estado de validación para la cantidad
+    public $cantidadError = null;
+    public $puedeAgregar = true;
 
     // clientes
     public $tipoCliente = 'registrado';
@@ -102,34 +105,65 @@ class Ventas extends Component
                 $this->stockMaximo = $marca->pivot->cantidad;
 
                 $this->cantidadAVender = ($this->stockMaximo > 0) ? 1 : 0;
+                $this->cantidadError = null;
+                $this->puedeAgregar = ($this->stockMaximo > 0);
             }
         } else {
             $this->stockMaximo = 0;
             $this->cantidadAVender = 1;
+            $this->cantidadError = null;
+            $this->puedeAgregar = true;
         }
     }
 
     public function updatedCantidadAVender($value)
     {
-        // Normalizar a entero y evitar valores inválidos
+        // No corregir automáticamente el valor ingresado. Solo validar y
+        // establecer mensajes/estado para deshabilitar el botón hasta que
+        // el usuario ingrese un valor válido.
+
+        // Campo vacío: mostrar error y deshabilitar añadir
+        if ($value === '' || is_null($value)) {
+            $this->cantidadError = 'Ingresa un dato válido.';
+            $this->puedeAgregar = false;
+            return;
+        }
+
+        // Si no es numérico: mensaje y deshabilitar
+        if (!is_numeric($value)) {
+            $this->cantidadError = 'Ingresa un número válido.';
+            $this->puedeAgregar = false;
+            return;
+        }
+
         $valorInt = (int) $value;
 
+        // Si es menor a 1: mensaje y deshabilitar (no corregir a 1)
         if ($valorInt < 1) {
-            $this->cantidadAVender = 1;
+            $this->cantidadError = 'La cantidad mínima es 1.';
+            $this->puedeAgregar = false;
             return;
         }
 
+        // Si supera el stock: mensaje y deshabilitar (no corregir el input)
         if ($this->stockMaximo > 0 && $valorInt > $this->stockMaximo) {
-            // No permitir vender más que el stock disponible
-            $this->cantidadAVender = $this->stockMaximo;
+            $this->cantidadError = 'No hay suficiente stock disponible.';
+            $this->puedeAgregar = false;
             return;
         }
 
-        $this->cantidadAVender = $valorInt;
+        // Valor válido
+        $this->cantidadError = null;
+        $this->puedeAgregar = true;
     }
 
     public function agregarAlCarrito()
     {
+        if (!$this->puedeAgregar) {
+            $this->addError('cantidadAVender', $this->cantidadError ?? 'La cantidad no es válida para agregar.');
+            return;
+        }
+
         $this->validate([
             'marcaSeleccionada' => [
                 'required',
@@ -183,7 +217,7 @@ class Ventas extends Component
 
         $this->calcularTotal();
         $this->modalSeleccion = false;
-        $this->reset(['marcaSeleccionada', 'cantidadAVender']);
+        $this->reset(['marcaSeleccionada', 'cantidadAVender', 'cantidadError', 'puedeAgregar']);
     }
 
     public function quitarDelCarrito($index)
@@ -339,6 +373,8 @@ class Ventas extends Component
             'marcaSeleccionada',
             'cantidadAVender',
             'stockMaximo',
+            'cantidadError',
+            'puedeAgregar',
         ]);
     }
 }

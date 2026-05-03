@@ -49,32 +49,31 @@
                 </div>
 
                 @if ($marcaSeleccionada)
-                <div>
-                    <x-label value="Cantidad" />
-                    <div class="relative">
-                        <x-input type="number" class="w-full" wire:model.live="cantidadAVender" min="1" max="{{$stockMaximo}}" />
-                        <div>
-                            @if($marcaSeleccionada)
-                            <span class="text-xs font-bold {{ $cantidadAVender > $stockMaximo ? 'text-red-500' : 'text-green-400' }}">
-                                Máx: {{ $stockMaximo }}
-                            </span>
-                            @endif
-                        </div>
-                        <div>
-                            @if ($cantidadAVender > $stockMaximo && $marcaSeleccionada)
-                            <span class="text-xs font-bold text-red-500">
-                                No puedes vender más de {{ $stockMaximo }} unidades.
-                            </span>
-                            @endif
-                        </div>
-                        <div>
-                            @if ($cantidadAVender=="" || $cantidadAVender < 1 && $marcaSeleccionada)
-                                <span class="text-xs font-bold text-red-500">
-                                Ingresa un dato valido
+                    <div>
+                        <x-label value="Cantidad" />
+                        <div class="relative">
+                            <x-input type="number" class="w-full" wire:model.live="cantidadAVender" />
+                            <div>
+                                @if($marcaSeleccionada)
+                                <span class="text-xs font-bold {{ (is_numeric($cantidadAVender) && $cantidadAVender > $stockMaximo) ? 'text-red-500' : 'text-green-400' }}">
+                                    Máx: {{ $stockMaximo }}
                                 </span>
                                 @endif
+                            </div>
+                            <div>
+                                @if ($cantidadError)
+                                <span class="text-xs font-bold text-red-500">
+                                    {{ $cantidadError }}
+                                </span>
+                                @else
+                                    @if ($marcaSeleccionada && is_numeric($cantidadAVender) && $cantidadAVender > $stockMaximo)
+                                    <span class="text-xs font-bold text-red-500">
+                                        No puedes vender más de {{ $stockMaximo }} unidades.
+                                    </span>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
-                    </div>
                     <x-input-error for="cantidadAVender" class="mt-1" />
 
                     {{-- ← NUEVO: Notificación de precio mayoreo --}}
@@ -103,7 +102,7 @@
                         </svg>
                         <p class="text-xs text-amber-700">
                             Compra
-                            <span class="font-black">{{ $marcaActual->pivot->cantidad_mayoreo - $cantidadAVender }}</span>
+                            <span class="font-black">{{ max(0, $marcaActual->pivot->cantidad_mayoreo - (int) $cantidadAVender) }}</span>
                             unidad(es) más para obtener precio de mayoreo
                             (<span class="font-black">${{ number_format($marcaActual->pivot->precio_mayoreo, 2) }}</span> c/u
                             al comprar {{ $marcaActual->pivot->cantidad_mayoreo }} o más).
@@ -118,9 +117,9 @@
         </x-slot>
         <x-slot name="footer">
             <x-secondary-button wire:click="cerrarModal">Cancelar</x-secondary-button>
-            @if ($marcaSeleccionada && $cantidadAVender > 0 && $cantidadAVender <= $stockMaximo)
-                <x-button wire:click="agregarAlCarrito" class="ml-3">Añadir al Ticket</x-button>
-                @endif
+            @if ($marcaSeleccionada)
+                <x-button wire:click="agregarAlCarrito" class="ml-3" :disabled="!$puedeAgregar">Añadir al Ticket</x-button>
+            @endif
         </x-slot>
     </x-dialog-modal>
 
