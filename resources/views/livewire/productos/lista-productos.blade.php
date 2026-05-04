@@ -28,6 +28,11 @@
                     :form="$form"
                     :marcas="$marcas"
                     :marcas_nuevas="$marcas_nuevas"
+                    :precio-costo="$PrecioCosto"
+                    :porcentaje-publico="$PorcentajePublico"
+                    :porcentaje-mayoreo="$PorcentajeMayoreo"
+                    :porcentaje-taller="$PorcentajeTaller"
+                    :cantidad-mayoreo="$cantidadMayoreo"
                 />
 
             </form>
@@ -94,8 +99,12 @@
             <x-th>ID</x-th>
             <x-th>Nombre</x-th>
             <x-th>Marcas</x-th>
-            <x-th>P. Cliente</x-th>
+            <x-th>P. Costo</x-th>
+            <x-th>% Ganancia</x-th>
+            <x-th>% Descuento</x-th>
+            <x-th>P. Publico</x-th>
             <x-th>P. Mayoreo</x-th>
+            <x-th>P. Taller</x-th>
             <x-th>Mín. Mayoreo</x-th>  {{-- ← NUEVO --}}
             <x-th>Cantidad</x-th>
             <x-th class="text-right">Acciones</x-th>
@@ -114,6 +123,55 @@
 
                 <x-td class="text-sm text-gray-500">
                     @foreach ($producto->marcas as $marca)
+                        <div class="whitespace-nowrap">${{ number_format($marca->pivot->precio_costo ?? 0, 2) }}</div>
+                    @endforeach
+                </x-td>
+
+                <x-td class="text-xs text-gray-500">
+                    @foreach ($producto->marcas as $marca)
+                        <div class="whitespace-nowrap space-y-1">
+                            @php
+                                $porcentajeP = $marca->pivot->porcentaje_publico ?? 0;
+                                $porcentajeM = $marca->pivot->porcentaje_mayoreo ?? 0;
+                                $porcentajeT = $marca->pivot->porcentaje_taller ?? 0;
+                                
+                                $colorP = $porcentajeP >= 25 ? 'bg-green-100 text-green-700' : ($porcentajeP >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                                $colorM = $porcentajeM >= 25 ? 'bg-green-100 text-green-700' : ($porcentajeM >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                                $colorT = $porcentajeT >= 25 ? 'bg-green-100 text-green-700' : ($porcentajeT >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                            @endphp
+                            <div class="flex gap-1 flex-wrap">
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $colorP }}">P: {{ number_format($porcentajeP, 2) }}%</span>
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $colorM }}">M: {{ number_format($porcentajeM, 2) }}%</span>
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $colorT }}">T: {{ number_format($porcentajeT, 2) }}%</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </x-td>
+
+                <x-td class="text-xs text-gray-500">
+                    @foreach ($producto->marcas as $marca)
+                        @php
+                            $descuentoMayoreo = ($marca->pivot->precio_cliente ?? 0) > 0
+                                ? ((($marca->pivot->precio_cliente ?? 0) - ($marca->pivot->precio_mayoreo ?? 0)) / ($marca->pivot->precio_cliente ?? 1)) * 100
+                                : 0;
+                            $descuentoTaller = ($marca->pivot->precio_cliente ?? 0) > 0
+                                ? ((($marca->pivot->precio_cliente ?? 0) - ($marca->pivot->precio_taller ?? 0)) / ($marca->pivot->precio_cliente ?? 1)) * 100
+                                : 0;
+                            
+                            $colorDescM = $descuentoMayoreo >= 20 ? 'bg-red-100 text-red-700' : ($descuentoMayoreo >= 10 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700');
+                            $colorDescT = $descuentoTaller >= 20 ? 'bg-red-100 text-red-700' : ($descuentoTaller >= 10 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700');
+                        @endphp
+                        <div class="whitespace-nowrap space-y-1">
+                            <div class="flex gap-1">
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $colorDescM }}">M: {{ number_format($descuentoMayoreo, 2) }}%</span>
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $colorDescT }}">T: {{ number_format($descuentoTaller, 2) }}%</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </x-td>
+
+                <x-td class="text-sm text-gray-500">
+                    @foreach ($producto->marcas as $marca)
                         <div class="whitespace-nowrap">${{ number_format($marca->pivot->precio_cliente, 2) }}</div>
                     @endforeach
                 </x-td>
@@ -125,6 +183,12 @@
                 </x-td>
 
                 {{-- ← NUEVA COLUMNA --}}
+                <x-td class="text-sm text-gray-500">
+                    @foreach ($producto->marcas as $marca)
+                        <div class="whitespace-nowrap">${{ number_format($marca->pivot->precio_taller ?? 0, 2) }}</div>
+                    @endforeach
+                </x-td>
+
                 <x-td class="text-sm text-gray-500">
                     @foreach ($producto->marcas as $marca)
                         <div class="whitespace-nowrap">

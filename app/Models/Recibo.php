@@ -15,6 +15,7 @@ class Recibo extends Model
         'fecha',
         'total',
         'id_cliente',
+        'nombre_invitado',
         'email_invitado',
         'user_id'
     ];

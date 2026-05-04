@@ -34,12 +34,18 @@ class ListaProductos extends Component
         'marcas_nuevas.*.cantidadMarca.required'=> 'La cantidad es obligatoria.',
         'marcas_nuevas.*.cantidadMarca.integer' => 'La cantidad debe ser un número entero.',
         'marcas_nuevas.*.cantidadMarca.min'     => 'La cantidad debe ser al menos 1.',
-        'marcas_nuevas.*.PrecioC.required'      => 'El precio de cliente es obligatorio.',
-        'marcas_nuevas.*.PrecioC.numeric'       => 'El precio de cliente debe ser numérico.',
-        'marcas_nuevas.*.PrecioC.min'           => 'El precio de cliente no puede ser negativo.',
-        'marcas_nuevas.*.PrecioM.required'      => 'El precio de mayoreo es obligatorio.',
-        'marcas_nuevas.*.PrecioM.numeric'       => 'El precio de mayoreo debe ser numérico.',
-        'marcas_nuevas.*.PrecioM.min'           => 'El precio de mayoreo no puede ser negativo.',
+        'marcas_nuevas.*.PrecioCosto.required'  => 'El precio costo es obligatorio.',
+        'marcas_nuevas.*.PrecioCosto.numeric'   => 'El precio costo debe ser numérico.',
+        'marcas_nuevas.*.PrecioCosto.min'       => 'El precio costo no puede ser negativo.',
+        'marcas_nuevas.*.PorcentajePublico.required' => 'El porcentaje de público es obligatorio.',
+        'marcas_nuevas.*.PorcentajePublico.numeric'  => 'El porcentaje de público debe ser numérico.',
+        'marcas_nuevas.*.PorcentajePublico.min'      => '⚠️ El porcentaje de público debe ser al menos 5% (evita pérdidas).',
+        'marcas_nuevas.*.PorcentajeMayoreo.required' => 'El porcentaje de mayoreo es obligatorio.',
+        'marcas_nuevas.*.PorcentajeMayoreo.numeric'  => 'El porcentaje de mayoreo debe ser numérico.',
+        'marcas_nuevas.*.PorcentajeMayoreo.min'      => '⚠️ El porcentaje de mayoreo debe ser al menos 5% (evita pérdidas).',
+        'marcas_nuevas.*.PorcentajeTaller.required' => 'El porcentaje de taller es obligatorio.',
+        'marcas_nuevas.*.PorcentajeTaller.numeric'  => 'El porcentaje de taller debe ser numérico.',
+        'marcas_nuevas.*.PorcentajeTaller.min'      => '⚠️ El porcentaje de taller debe ser al menos 5% (evita pérdidas).',
         'marcas_nuevas.*.cantidadMayoreo.required' => 'La cantidad mínima de mayoreo es obligatoria.',
         'marcas_nuevas.*.cantidadMayoreo.integer'  => 'La cantidad mínima de mayoreo debe ser un número entero.',
         'marcas_nuevas.*.cantidadMayoreo.min'      => 'La cantidad mínima de mayoreo debe ser al menos 1.',
@@ -48,12 +54,18 @@ class ListaProductos extends Component
         'cantidadMarca.required'                => 'La cantidad es obligatoria.',
         'cantidadMarca.integer'                 => 'La cantidad debe ser un número entero.',
         'cantidadMarca.min'                     => 'La cantidad debe ser al menos 1.',
-        'PrecioC.required'                      => 'El precio de cliente es obligatorio.',
-        'PrecioC.numeric'                       => 'El precio de cliente debe ser numérico.',
-        'PrecioC.min'                           => 'El precio de cliente no puede ser negativo.',
-        'PrecioM.required'                      => 'El precio de mayoreo es obligatorio.',
-        'PrecioM.numeric'                       => 'El precio de mayoreo debe ser numérico.',
-        'PrecioM.min'                           => 'El precio de mayoreo no puede ser negativo.',
+        'PrecioCosto.required'                  => 'El precio costo es obligatorio.',
+        'PrecioCosto.numeric'                   => 'El precio costo debe ser numérico.',
+        'PrecioCosto.min'                       => 'El precio costo no puede ser negativo.',
+        'PorcentajePublico.required'            => 'El porcentaje de público es obligatorio.',
+        'PorcentajePublico.numeric'             => 'El porcentaje de público debe ser numérico.',
+        'PorcentajePublico.min'                 => '⚠️ El porcentaje de público debe ser al menos 5% (evita pérdidas).',
+        'PorcentajeMayoreo.required'            => 'El porcentaje de mayoreo es obligatorio.',
+        'PorcentajeMayoreo.numeric'             => 'El porcentaje de mayoreo debe ser numérico.',
+        'PorcentajeMayoreo.min'                 => '⚠️ El porcentaje de mayoreo debe ser al menos 5% (evita pérdidas).',
+        'PorcentajeTaller.required'             => 'El porcentaje de taller es obligatorio.',
+        'PorcentajeTaller.numeric'              => 'El porcentaje de taller debe ser numérico.',
+        'PorcentajeTaller.min'                  => '⚠️ El porcentaje de taller debe ser al menos 5% (evita pérdidas).',
         'cantidadMayoreo.required'              => 'La cantidad mínima de mayoreo es obligatoria.',
         'cantidadMayoreo.integer'               => 'La cantidad mínima de mayoreo debe ser un número entero.',
         'cantidadMayoreo.min'                   => 'La cantidad mínima de mayoreo debe ser al menos 1.',
@@ -72,8 +84,13 @@ class ListaProductos extends Component
     // campos del formulario de marca
     public $idMarca        = '';
     public $cantidadMarca  = 0;
+    public $PrecioCosto    = 0;
+    public $PorcentajePublico = 0;
+    public $PorcentajeMayoreo = 0;
+    public $PorcentajeTaller = 0;
     public $PrecioC        = 0;
     public $PrecioM        = 0;
+    public $PrecioT        = 0;
     public $cantidadMayoreo = 3; // ← NUEVO: default 3
 
     // modales
@@ -136,8 +153,13 @@ class ListaProductos extends Component
             'marcas_nuevas',
             'idMarca',
             'cantidadMarca',
+            'PrecioCosto',
+            'PorcentajePublico',
+            'PorcentajeMayoreo',
+            'PorcentajeTaller',
             'PrecioC',
             'PrecioM',
+            'PrecioT',
             'cantidadMayoreo',   // ← NUEVO
             'modalProducto',
             'modalActualizar',
@@ -174,8 +196,13 @@ class ListaProductos extends Component
                     $pivoteDatos[$item['idMarca']] = [
                         'cantidad'          => $item['cantidadMarca'],
                         'cantidad_mayoreo'  => $item['cantidadMayoreo'],  // ← NUEVO
+                        'precio_costo'      => $item['PrecioCosto'],
+                        'porcentaje_publico' => $item['PorcentajePublico'],
+                        'porcentaje_mayoreo' => $item['PorcentajeMayoreo'],
+                        'porcentaje_taller'  => $item['PorcentajeTaller'],
                         'precio_cliente'    => $item['PrecioC'],
                         'precio_mayoreo'    => $item['PrecioM'],
+                        'precio_taller'     => $item['PrecioT'],
                         'venta_producto'    => 0,
                     ];
                 }
@@ -208,8 +235,13 @@ class ListaProductos extends Component
                 'nombreMarca'     => $marca->nombre_marca,
                 'cantidadMarca'   => $marca->pivot->cantidad,
                 'cantidadMayoreo' => $marca->pivot->cantidad_mayoreo, // ← NUEVO
+                'PrecioCosto'     => $marca->pivot->precio_costo ?? $marca->pivot->precio_cliente,
+                'PorcentajePublico' => $marca->pivot->porcentaje_publico ?? 0,
+                'PorcentajeMayoreo' => $marca->pivot->porcentaje_mayoreo ?? 0,
+                'PorcentajeTaller'  => $marca->pivot->porcentaje_taller ?? 0,
                 'PrecioC'         => $marca->pivot->precio_cliente,
                 'PrecioM'         => $marca->pivot->precio_mayoreo,
+                'PrecioT'         => $marca->pivot->precio_taller ?? $marca->pivot->precio_mayoreo,
             ];
         }
 
@@ -235,8 +267,13 @@ class ListaProductos extends Component
                 $pivoteDatos[$item['idMarca']] = [
                     'cantidad'         => $item['cantidadMarca'],
                     'cantidad_mayoreo' => $item['cantidadMayoreo'],  // ← NUEVO
+                    'precio_costo'      => $item['PrecioCosto'],
+                    'porcentaje_publico' => $item['PorcentajePublico'],
+                    'porcentaje_mayoreo' => $item['PorcentajeMayoreo'],
+                    'porcentaje_taller'  => $item['PorcentajeTaller'],
                     'precio_cliente'   => $item['PrecioC'],
                     'precio_mayoreo'   => $item['PrecioM'],
+                    'precio_taller'     => $item['PrecioT'],
                     'venta_producto'   => 0,
                 ];
             }
@@ -292,20 +329,47 @@ class ListaProductos extends Component
                 Rule::exists('marca', 'id')->where('user_id', Auth::id()),
             ],
             'cantidadMarca'   => 'required|integer|min:1',
-            'PrecioC'         => 'required|numeric|min:0',
-            'PrecioM'         => 'required|numeric|min:0',
+            'PrecioCosto'     => 'required|numeric|min:0',
+            'PorcentajePublico' => 'required|numeric|min:5',
+            'PorcentajeMayoreo' => 'required|numeric|min:5',
+            'PorcentajeTaller'  => 'required|numeric|min:5',
             'cantidadMayoreo' => 'required|integer|min:1',  // ← NUEVO
         ]);
+
+        // ✓ Validar jerarquía: Público >= Mayoreo >= Taller
+        if ((float) $this->PorcentajePublico < (float) $this->PorcentajeMayoreo) {
+            $this->addError('PorcentajePublico', '❌ El % de Ganancia Público debe ser ≥ al % de Mayoreo. Público está menor.');
+            return;
+        }
+
+        if ((float) $this->PorcentajeMayoreo < (float) $this->PorcentajeTaller) {
+            $this->addError('PorcentajeMayoreo', '❌ El % de Ganancia Mayoreo debe ser ≥ al % de Taller. Mayoreo está menor.');
+            return;
+        }
+
+        if ((float) $this->PorcentajePublico < (float) $this->PorcentajeTaller) {
+            $this->addError('PorcentajeTaller', '❌ El % de Ganancia Taller debe ser ≤ al % de Público.');
+            return;
+        }
+
+        $precioPublico = $this->calcularPrecioPorPorcentaje((float) $this->PrecioCosto, (float) $this->PorcentajePublico);
+        $precioMayoreo = $this->calcularPrecioPorPorcentaje((float) $this->PrecioCosto, (float) $this->PorcentajeMayoreo);
+        $precioTaller = $this->calcularPrecioPorPorcentaje((float) $this->PrecioCosto, (float) $this->PorcentajeTaller);
 
         // Si la marca ya existe en la lista → actualizar
         foreach ($this->marcas_nuevas as $index => $marcaExistente) {
             if ((int) $marcaExistente['idMarca'] === (int) $this->idMarca) {
                 $this->marcas_nuevas[$index]['cantidadMarca']   = (int) $marcaExistente['cantidadMarca'] + (int) $this->cantidadMarca;
-                $this->marcas_nuevas[$index]['PrecioC']         = (float) $this->PrecioC;
-                $this->marcas_nuevas[$index]['PrecioM']         = (float) $this->PrecioM;
+                $this->marcas_nuevas[$index]['PrecioCosto']     = (float) $this->PrecioCosto;
+                $this->marcas_nuevas[$index]['PorcentajePublico'] = (float) $this->PorcentajePublico;
+                $this->marcas_nuevas[$index]['PorcentajeMayoreo'] = (float) $this->PorcentajeMayoreo;
+                $this->marcas_nuevas[$index]['PorcentajeTaller']  = (float) $this->PorcentajeTaller;
+                $this->marcas_nuevas[$index]['PrecioC']         = $precioPublico;
+                $this->marcas_nuevas[$index]['PrecioM']         = $precioMayoreo;
+                $this->marcas_nuevas[$index]['PrecioT']         = $precioTaller;
                 $this->marcas_nuevas[$index]['cantidadMayoreo'] = (int) $this->cantidadMayoreo; // ← NUEVO
 
-                $this->reset(['idMarca', 'cantidadMarca', 'PrecioC', 'PrecioM', 'cantidadMayoreo']);
+                $this->reset(['idMarca', 'cantidadMarca', 'PrecioCosto', 'PorcentajePublico', 'PorcentajeMayoreo', 'PorcentajeTaller', 'PrecioC', 'PrecioM', 'PrecioT', 'cantidadMayoreo']);
                 return;
             }
         }
@@ -323,11 +387,16 @@ class ListaProductos extends Component
             'nombreMarca'     => $marcaInfo->nombre_marca,
             'cantidadMarca'   => $this->cantidadMarca,
             'cantidadMayoreo' => $this->cantidadMayoreo,  // ← NUEVO
-            'PrecioC'         => $this->PrecioC,
-            'PrecioM'         => $this->PrecioM,
+            'PrecioCosto'     => (float) $this->PrecioCosto,
+            'PorcentajePublico' => (float) $this->PorcentajePublico,
+            'PorcentajeMayoreo' => (float) $this->PorcentajeMayoreo,
+            'PorcentajeTaller'  => (float) $this->PorcentajeTaller,
+            'PrecioC'         => $precioPublico,
+            'PrecioM'         => $precioMayoreo,
+            'PrecioT'         => $precioTaller,
         ];
 
-        $this->reset(['idMarca', 'cantidadMarca', 'PrecioC', 'PrecioM', 'cantidadMayoreo']);
+        $this->reset(['idMarca', 'cantidadMarca', 'PrecioCosto', 'PorcentajePublico', 'PorcentajeMayoreo', 'PorcentajeTaller', 'PrecioC', 'PrecioM', 'PrecioT', 'cantidadMayoreo']);
     }
 
     public function quitarMarca($index)
@@ -365,9 +434,16 @@ class ListaProductos extends Component
             'marcas_nuevas'                        => ['required', 'array', 'min:1'],
             'marcas_nuevas.*.idMarca'              => ['required', 'integer', Rule::exists('marca', 'id')->where('user_id', Auth::id())],
             'marcas_nuevas.*.cantidadMarca'        => ['required', 'integer', 'min:1'],
-            'marcas_nuevas.*.cantidadMayoreo'      => ['required', 'integer', 'min:1'],  // ← NUEVO
-            'marcas_nuevas.*.PrecioC'              => ['required', 'numeric', 'min:0'],
-            'marcas_nuevas.*.PrecioM'              => ['required', 'numeric', 'min:0'],
+            'marcas_nuevas.*.cantidadMayoreo'      => ['required', 'integer', 'min:1'],
+            'marcas_nuevas.*.PrecioCosto'          => ['required', 'numeric', 'min:0'],
+            'marcas_nuevas.*.PorcentajePublico'    => ['required', 'numeric', 'min:5'],
+            'marcas_nuevas.*.PorcentajeMayoreo'    => ['required', 'numeric', 'min:5'],
+            'marcas_nuevas.*.PorcentajeTaller'     => ['required', 'numeric', 'min:5'],
         ];
+    }
+
+    private function calcularPrecioPorPorcentaje(float $precioCosto, float $porcentaje): float
+    {
+        return round($precioCosto * (1 + ($porcentaje / 100)), 2);
     }
 }

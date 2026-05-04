@@ -23,7 +23,7 @@
     <p>
         Ticket: #{{ $recibo->id }}<br>
         Fecha: {{ $recibo->fecha }}<br>
-        Cliente: {{ $recibo->cliente ? $recibo->cliente->nombres_cliente : 'Público General' }}<br>
+        Cliente: {{ $recibo->cliente ? $recibo->cliente->nombres_cliente : ($recibo->nombre_invitado ?: 'Público General') }}<br>
         @if($recibo->cliente)
             DUI: {{ $recibo->cliente->dui_cliente }}<br>
         @endif

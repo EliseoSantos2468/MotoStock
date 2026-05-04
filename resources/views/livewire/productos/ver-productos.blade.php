@@ -90,12 +90,68 @@
                         
                         <div class="space-y-2 border-t pt-3">
                             <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">Precio Costo:</span>
+                                <span class="font-bold text-gray-700">${{ number_format($marca->pivot->precio_costo ?? 0, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
                                 <span class="text-gray-500">Precio Público:</span>
                                 <span class="font-bold text-indigo-600">${{ number_format($marca->pivot->precio_cliente, 2) }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-500">Precio Mayoreo:</span>
                                 <span class="font-bold text-slate-700">${{ number_format($marca->pivot->precio_mayoreo, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">Precio Taller:</span>
+                                <span class="font-bold text-slate-700">${{ number_format($marca->pivot->precio_taller ?? 0, 2) }}</span>
+                            </div>
+
+                            <div class="pt-2 border-t space-y-1">
+                                <p class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">Porcentajes de Ganancia</p>
+                                @php
+                                    $porcentajeP = $marca->pivot->porcentaje_publico ?? 0;
+                                    $porcentajeM = $marca->pivot->porcentaje_mayoreo ?? 0;
+                                    $porcentajeT = $marca->pivot->porcentaje_taller ?? 0;
+                                    
+                                    $colorP = $porcentajeP >= 25 ? 'bg-green-100 text-green-700' : ($porcentajeP >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                                    $colorM = $porcentajeM >= 25 ? 'bg-green-100 text-green-700' : ($porcentajeM >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                                    $colorT = $porcentajeT >= 25 ? 'bg-green-100 text-green-700' : ($porcentajeT >= 15 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                                @endphp
+                                <div class="flex justify-between text-xs items-center">
+                                    <span class="text-gray-500">Público:</span>
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $colorP }}">{{ number_format($porcentajeP, 2) }}%</span>
+                                </div>
+                                <div class="flex justify-between text-xs items-center">
+                                    <span class="text-gray-500">Mayoreo:</span>
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $colorM }}">{{ number_format($porcentajeM, 2) }}%</span>
+                                </div>
+                                <div class="flex justify-between text-xs items-center">
+                                    <span class="text-gray-500">Taller:</span>
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $colorT }}">{{ number_format($porcentajeT, 2) }}%</span>
+                                </div>
+                            </div>
+
+                            <div class="pt-2 border-t space-y-1">
+                                <p class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">Descuento vs Público</p>
+                                @php
+                                    $descuentoMayoreo = ($marca->pivot->precio_cliente ?? 0) > 0
+                                        ? ((($marca->pivot->precio_cliente ?? 0) - ($marca->pivot->precio_mayoreo ?? 0)) / ($marca->pivot->precio_cliente ?? 1)) * 100
+                                        : 0;
+                                    $descuentoTaller = ($marca->pivot->precio_cliente ?? 0) > 0
+                                        ? ((($marca->pivot->precio_cliente ?? 0) - ($marca->pivot->precio_taller ?? 0)) / ($marca->pivot->precio_cliente ?? 1)) * 100
+                                        : 0;
+                                    
+                                    $colorDescM = $descuentoMayoreo >= 20 ? 'bg-red-100 text-red-700' : ($descuentoMayoreo >= 10 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700');
+                                    $colorDescT = $descuentoTaller >= 20 ? 'bg-red-100 text-red-700' : ($descuentoTaller >= 10 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700');
+                                @endphp
+                                <div class="flex justify-between text-xs items-center">
+                                    <span class="text-gray-500">Mayoreo:</span>
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $colorDescM }}">{{ number_format($descuentoMayoreo, 2) }}%</span>
+                                </div>
+                                <div class="flex justify-between text-xs items-center">
+                                    <span class="text-gray-500">Taller:</span>
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $colorDescT }}">{{ number_format($descuentoTaller, 2) }}%</span>
+                                </div>
                             </div>
                         </div>
                     </div>

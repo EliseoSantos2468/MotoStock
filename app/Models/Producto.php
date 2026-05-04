@@ -21,8 +21,13 @@ class Producto extends Model
         return $this->belongsToMany(Marca::class, 'producto_marca')
                     ->withPivot('cantidad')
                     ->withPivot('cantidad_mayoreo')
+                    ->withPivot('precio_costo')
+                    ->withPivot('porcentaje_publico')
+                    ->withPivot('porcentaje_mayoreo')
+                    ->withPivot('porcentaje_taller')
                     ->withPivot('precio_cliente')
                     ->withPivot('precio_mayoreo')
+                    ->withPivot('precio_taller')
                     ->withPivot('venta_producto')
                     ->withTimestamps();
     }

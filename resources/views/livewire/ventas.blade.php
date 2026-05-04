@@ -124,12 +124,52 @@
     </x-dialog-modal>
 
     <x-confirmation-modal wire:model.live="modalConfirmVenta">
-        <x-slot name="title">Confirmar Pago</x-slot>
+        <x-slot name="title">Confirmar Venta</x-slot>
         <x-slot name="content">
             @error('carrito')
             <div class="mb-3 text-sm text-red-600">{{ $message }}</div>
             @enderror
-            ¿Desea finalizar la venta por un total de <span class="font-bold text-lg">${{ number_format($totalVenta, 2) }}</span>?
+            
+            <div class="space-y-4">
+                {{-- Tipo de Cliente --}}
+                <div class="p-3 bg-gradient-to-r {{ $tipoClienteCompra == 'tallerista' ? 'from-purple-50 to-purple-100 border-purple-200' : 'from-indigo-50 to-indigo-100 border-indigo-200' }} rounded-lg border">
+                    <p class="text-xs font-bold {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-700' : 'text-indigo-700' }} uppercase tracking-wide">
+                        {{ $tipoClienteCompra == 'tallerista' ? '🔧 Tallerista' : '👤 Cliente Normal' }}
+                    </p>
+                    <p class="text-sm font-semibold {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-900' : 'text-indigo-900' }}">
+                        {{ $tipoClienteCompra == 'tallerista' ? 'Aplicando Precio de Taller' : 'Aplicando Precio de Mayoreo (si aplica)' }}
+                    </p>
+                </div>
+
+                {{-- Resumen de Productos --}}
+                <div class="border-t pt-3">
+                    <p class="text-xs font-bold text-gray-600 uppercase mb-2">Detalle de Productos:</p>
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        @foreach($carrito as $item)
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200 text-xs">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="font-bold text-gray-900">{{ $item['nombre'] }}</span>
+                                <span class="font-bold text-indigo-600">${{ number_format($item['subtotal'], 2) }}</span>
+                            </div>
+                            <div class="text-gray-600 text-[11px]">
+                                <span class="font-semibold">{{ $item['marca'] }}</span> | {{ $item['cantidad'] }} x ${{ number_format($item['precio'], 2) }}
+                            </div>
+                            <div class="text-[10px]">
+                                <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-semibold">{{ $item['tipoDescuento'] }}</span>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Total --}}
+                <div class="border-t-2 border-dashed pt-3">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gray-700 text-sm">TOTAL A COBRAR:</span>
+                        <span class="text-2xl font-black text-green-600">${{ number_format($totalVenta, 2) }}</span>
+                    </div>
+                </div>
+            </div>
         </x-slot>
         <x-slot name="footer">
             <x-secondary-button wire:click="$set('modalConfirmVenta', false)" wire:loading.attr="disabled" wire:target="guardarVenta">Revisar</x-secondary-button>
@@ -223,6 +263,11 @@
                     </div>
                     @else
                     <div class="animate-fadeIn">
+                        <x-label value="Nombre del Cliente Invitado (Opcional)" />
+                        <x-input type="text" wire:model="nombreInvitado" class="w-full text-sm" placeholder="Ej: Cliente de Mostrador" />
+                        <x-input-error for="nombreInvitado" class="mt-1" />
+
+                        <div class="mt-3"></div>
                         <x-label value="Correo para Factura Electrónica (Opcional)" />
                         <x-input type="email" wire:model="emailFacturacion" class="w-full text-sm" placeholder="correo@cliente.com" />
                         <x-input-error for="emailFacturacion" class="mt-1" />
@@ -235,21 +280,66 @@
                     @endif
                 </div>
 
+                {{-- Tipo de Cliente para Compra --}}
+                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-purple-500 mb-6">
+                    <h3 class="font-bold text-gray-700 flex items-center mb-4">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+                        </svg>
+                        Tipo de Cliente para esta Compra
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button wire:click="$set('tipoClienteCompra', 'normal')"
+                            class="px-4 py-2 text-sm font-bold rounded-lg transition {{ $tipoClienteCompra == 'normal' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                            <div class="flex flex-col items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span>Cliente Normal</span>
+                                <span class="text-[10px] font-normal">Aplica Mayoreo</span>
+                            </div>
+                        </button>
+                        <button wire:click="$set('tipoClienteCompra', 'tallerista')"
+                            class="px-4 py-2 text-sm font-bold rounded-lg transition {{ $tipoClienteCompra == 'tallerista' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                            <div class="flex flex-col items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Tallerista</span>
+                                <span class="text-[10px] font-normal">P. Taller Siempre</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-indigo-600 lg:sticky lg:top-6">
+                    {{-- Indicador de Tipo de Cliente --}}
+                    <div class="mb-4 p-3 rounded-lg {{ $tipoClienteCompra == 'tallerista' ? 'bg-purple-50 border border-purple-200' : 'bg-indigo-50 border border-indigo-200' }}">
+                        <p class="text-xs font-bold uppercase {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-700' : 'text-indigo-700' }}">
+                            {{ $tipoClienteCompra == 'tallerista' ? '🔧 Modo Tallerista' : '👤 Modo Cliente Normal' }}
+                        </p>
+                        <p class="text-sm font-semibold {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-900' : 'text-indigo-900' }}">
+                            {{ $tipoClienteCompra == 'tallerista' ? 'Precio de Taller en todos los productos' : 'Aplicando Mayoreo cuando aplique' }}
+                        </p>
+                    </div>
+
                     <h3 class="font-black text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">Ticket de Venta</h3>
                     <div class="space-y-4 mb-6">
                         @error('carrito')
                         <div class="text-sm text-red-600">{{ $message }}</div>
                         @enderror
                         @forelse($carrito as $indice => $item)
-                        <div class="flex justify-between items-start text-sm">
+                        <div class="flex justify-between items-start text-sm border border-gray-200 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
                             <div class="flex-1">
                                 <p class="font-bold text-gray-800">{{ $item['nombre'] }}</p>
-                                <p class="text-xs text-gray-400">{{ $item['marca'] }} ({{ $item['cantidad'] }} x ${{ $item['precio'] }})</p>
+                                <p class="text-xs text-gray-500">{{ $item['marca'] }} | {{ $item['cantidad'] }} x ${{ number_format($item['precio'], 2) }}</p>
+                                <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded">
+                                    {{ $item['tipoDescuento'] ?? 'Precio Normal' }}
+                                </span>
                             </div>
                             <div class="text-right ml-4">
                                 <p class="font-bold text-indigo-600">${{ number_format($item['subtotal'], 2) }}</p>
-                                <button wire:click="quitarDelCarrito({{ $indice }})" class="text-[10px] text-red-500 hover:underline uppercase">Remover</button>
+                                <button wire:click="quitarDelCarrito({{ $indice }})" class="text-[10px] text-red-500 hover:underline uppercase mt-1">Remover</button>
                             </div>
                         </div>
                         @empty

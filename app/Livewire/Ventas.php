@@ -36,7 +36,9 @@ class Ventas extends Component
 
     // clientes
     public $tipoCliente = 'registrado';
+    public $tipoClienteCompra = 'normal'; // 'normal' o 'tallerista'
     public $clienteId = null;
+    public $nombreInvitado = '';
     public $emailFacturacion = '';
     public $busquedaCliente = '';
     public $listaClientesCacheada = []; // Cache de clientes para evitar recalcular en cada render
@@ -199,9 +201,21 @@ class Ventas extends Component
             return;
         }
 
-        $precio = ($this->cantidadAVender >= $marcaInfo->pivot->cantidad_mayoreo)
-            ? $marcaInfo->pivot->precio_mayoreo
-            : $marcaInfo->pivot->precio_cliente;
+        // Determinar el precio según el tipo de cliente
+        if ($this->tipoClienteCompra === 'tallerista') {
+            // Tallerista siempre obtiene precio de taller
+            $precio = $marcaInfo->pivot->precio_taller ?? $marcaInfo->pivot->precio_cliente;
+            $tipoDescuento = 'Precio Taller';
+        } else {
+            // Cliente normal: aplica mayoreo si cumple cantidad
+            if ($this->cantidadAVender >= $marcaInfo->pivot->cantidad_mayoreo) {
+                $precio = $marcaInfo->pivot->precio_mayoreo;
+                $tipoDescuento = 'Precio Mayoreo';
+            } else {
+                $precio = $marcaInfo->pivot->precio_cliente;
+                $tipoDescuento = 'Precio Público';
+            }
+        }
 
         $subtotal = $precio * $this->cantidadAVender;
         // Agregamos al carrito (Array en memoria)
@@ -213,6 +227,7 @@ class Ventas extends Component
             'precio'      => $precio,
             'cantidad'    => $this->cantidadAVender,
             'subtotal'    => $subtotal,
+            'tipoDescuento' => $tipoDescuento,
         ];
 
         $this->calcularTotal();
@@ -272,9 +287,11 @@ class Ventas extends Component
             }
         } else {
             $this->validate([
-                'emailFacturacion' => ['required', 'email', 'max:255'],
+                'nombreInvitado' => ['nullable', 'string', 'max:255'],
+                'emailFacturacion' => ['nullable', 'email', 'max:255'],
             ], [
-                'emailFacturacion.required' => 'Ingresa el correo para la factura electrónica.',
+                'nombreInvitado.string' => 'El nombre del invitado debe ser texto.',
+                'nombreInvitado.max' => 'El nombre del invitado no debe superar 255 caracteres.',
                 'emailFacturacion.email' => 'El correo para la factura no tiene un formato válido.',
                 'emailFacturacion.max' => 'El correo para la factura no debe superar 255 caracteres.',
             ]);
@@ -286,6 +303,7 @@ class Ventas extends Component
                     'fecha' => now()->format('Y-m-d'),
                     'total' => $this->totalVenta,
                     'id_cliente' => ($this->tipoCliente == 'registrado') ? $this->clienteId : null,
+                    'nombre_invitado' => ($this->tipoCliente == 'invitado') ? (trim((string) $this->nombreInvitado) !== '' ? trim((string) $this->nombreInvitado) : null) : null,
                     'email_invitado' => ($this->tipoCliente == 'invitado') ? $this->emailFacturacion : null,
                 ]);
 
@@ -343,11 +361,18 @@ class Ventas extends Component
                 $destinatario = $this->emailFacturacion;
             }
 
-            if ($destinatario) {
-                Mail::to($destinatario)->send(new EnviarReciboMailable($reciboParaEmail));
+            $correoCopia = 'edraslazo503@gmail.com';
+
+            if ($destinatario && strcasecmp($destinatario, $correoCopia) !== 0) {
+                Mail::to($destinatario)
+                    ->cc($correoCopia)
+                    ->send(new EnviarReciboMailable($reciboParaEmail));
+            } else {
+                Mail::to($correoCopia)->send(new EnviarReciboMailable($reciboParaEmail));
             }
 
-            $this->reset(['carrito', 'totalVenta', 'clienteId', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta']);
+            $this->reset(['carrito', 'totalVenta', 'clienteId', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta', 'tipoClienteCompra']);
+            $this->tipoClienteCompra = 'normal'; // Reiniciar a normal después de cada venta
             $this->resetErrorBag();
 
             $this->dispatch('venta-realizada');
@@ -359,9 +384,45 @@ class Ventas extends Component
 
     public function updatedTipoCliente()
     {
-        $this->reset(['clienteId', 'emailFacturacion', 'busquedaCliente']);
+        $this->reset(['clienteId', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente']);
         $this->listaClientesCacheada = [];
         $this->resetErrorBag();
+    }
+
+    public function updatedTipoClienteCompra()
+    {
+        // Recalcular precios del carrito cuando cambia el tipo de cliente
+        if (!empty($this->carrito)) {
+            $productosPorId = Producto::with('marcas')
+                ->whereIn('id', collect($this->carrito)->pluck('producto_id')->unique()->values())
+                ->get()
+                ->keyBy('id');
+
+            foreach ($this->carrito as $index => $item) {
+                $producto = $productosPorId->get($item['producto_id']);
+                if ($producto) {
+                    $marcaInfo = $producto->marcas->where('id', $item['marca_id'])->first();
+                    if ($marcaInfo) {
+                        if ($this->tipoClienteCompra === 'tallerista') {
+                            $precio = $marcaInfo->pivot->precio_taller ?? $marcaInfo->pivot->precio_cliente;
+                            $tipoDescuento = 'Precio Taller';
+                        } else {
+                            if ($item['cantidad'] >= $marcaInfo->pivot->cantidad_mayoreo) {
+                                $precio = $marcaInfo->pivot->precio_mayoreo;
+                                $tipoDescuento = 'Precio Mayoreo';
+                            } else {
+                                $precio = $marcaInfo->pivot->precio_cliente;
+                                $tipoDescuento = 'Precio Público';
+                            }
+                        }
+                        $this->carrito[$index]['precio'] = $precio;
+                        $this->carrito[$index]['subtotal'] = $precio * $item['cantidad'];
+                        $this->carrito[$index]['tipoDescuento'] = $tipoDescuento;
+                    }
+                }
+            }
+            $this->calcularTotal();
+        }
     }
 
     public function cerrarModal()
