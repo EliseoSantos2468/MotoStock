@@ -2,6 +2,7 @@
     "form" => '',
     "marcas" => [],
     "marcas_nuevas" => [],
+    "marcaEditandoIndex" => null,
     "precioCosto" => 0,
     "porcentajePublico" => 0,
     "porcentajeMayoreo" => 0,
@@ -74,15 +75,15 @@
         </div>
 
         <div>
-            <x-label for="porcentajeMayoreo" value="% Ganancia Mayoreo (Mayor o igual a Taller)" />
-            <x-input wire:model="PorcentajeMayoreo" name="PorcentajeMayoreo" step="0.01" min="5" class="w-full" type="number" id="porcentajeMayoreo" />
-            <x-input-error for="PorcentajeMayoreo" class="mt-1" />
-        </div>
-
-        <div>
             <x-label for="porcentajeTaller" value="% Ganancia Taller (Menor o igual a Mayoreo)" />
             <x-input wire:model="PorcentajeTaller" name="PorcentajeTaller" step="0.01" min="5" class="w-full" type="number" id="porcentajeTaller" />
             <x-input-error for="PorcentajeTaller" class="mt-1" />
+        </div>
+
+        <div>
+            <x-label for="porcentajeMayoreo" value="% Ganancia Mayoreo (Mayor o igual a Taller)" />
+            <x-input wire:model="PorcentajeMayoreo" name="PorcentajeMayoreo" step="0.01" min="5" class="w-full" type="number" id="porcentajeMayoreo" />
+            <x-input-error for="PorcentajeMayoreo" class="mt-1" />
         </div>
 
         <div class="md:col-span-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
@@ -144,10 +145,16 @@
             <x-input-error for="cantidadMayoreo" class="mt-1" />
         </div>
 
-        <div class="md:col-span-2">
+        <div class="md:col-span-2 flex flex-wrap items-center gap-3">
             <x-button wire:click.prevent="agregarMarca">
-                Agregar Marca
+                {{ is_null($marcaEditandoIndex) ? 'Agregar Marca' : 'Actualizar Marca' }}
             </x-button>
+
+            @if (!is_null($marcaEditandoIndex))
+                <x-secondary-button wire:click.prevent="cancelarEdicionMarca">
+                    Cancelar edición
+                </x-secondary-button>
+            @endif
         </div>
 
         <div class="col-span-2">
@@ -182,29 +189,32 @@
                             $rowClass = (!$precioPublicoOk || !$precioMayoreoOk || !$precioTallerOk) ? 'bg-red-50 border-l-4 border-red-500' : ($margenBajo ? 'bg-yellow-50 border-l-4 border-yellow-400' : '');
                         @endphp
                         <x-tr class="{{ $rowClass }}">
-                            <x-td class="text-sm text-gray-900">
+                            <x-td class="text-sm text-gray-900 align-top">
                                 {{ $marcaN['idMarca'] }}
                             </x-td>
 
-                            <x-td class="text-sm text-gray-900 uppercase">
-                                {{ $marcaN['nombreMarca'] ?? 'Sin nombre' }}
+                            <x-td class="text-sm text-gray-900 uppercase align-top">
+                                <button type="button" wire:click="cargarMarcaParaEdicion({{ $index }})" class="text-left font-semibold text-indigo-700 hover:text-indigo-900 hover:underline">
+                                    {{ $marcaN['nombreMarca'] ?? 'Sin nombre' }}
+                                </button>
+                                <div class="text-[10px] text-gray-400">clic para editar</div>
                             </x-td>
 
-                            <x-td class="text-sm text-indigo-600 font-bold">
+                            <x-td class="text-sm text-indigo-600 font-bold align-top">
                                 {{ $marcaN['cantidadMarca'] }}
                             </x-td>
 
-                            <x-td class="text-sm text-gray-500">
+                            <x-td class="text-sm text-gray-500 align-top">
                                 ${{ number_format($marcaN['PrecioCosto'], 2) }}
                             </x-td>
 
-                            <x-td class="text-xs text-gray-600">
-                                <div class="{{ (float) $marcaN['PorcentajePublico'] < 5 ? 'text-red-600 font-bold' : '' }}">P: {{ number_format($marcaN['PorcentajePublico'], 2) }}%</div>
-                                <div class="{{ (float) $marcaN['PorcentajeMayoreo'] < 5 ? 'text-red-600 font-bold' : '' }}">M: {{ number_format($marcaN['PorcentajeMayoreo'], 2) }}%</div>
-                                <div class="{{ (float) $marcaN['PorcentajeTaller'] < 5 ? 'text-red-600 font-bold' : '' }}">T: {{ number_format($marcaN['PorcentajeTaller'], 2) }}%</div>
+                            <x-td class="text-xs text-gray-600 align-top">
+                                <div>P: {{ number_format($marcaN['PorcentajePublico'], 2) }}%</div>
+                                <div>M: {{ number_format($marcaN['PorcentajeMayoreo'], 2) }}%</div>
+                                <div>T: {{ number_format($marcaN['PorcentajeTaller'], 2) }}%</div>
                             </x-td>
 
-                            <x-td class="text-xs text-gray-600">
+                            <x-td class="text-xs text-gray-600 align-top">
                                 @php
                                     $descuentoMayoreo = $marcaN['PrecioC'] > 0
                                         ? round((($marcaN['PrecioC'] - $marcaN['PrecioM']) / $marcaN['PrecioC']) * 100, 2)
@@ -217,34 +227,39 @@
                                 <div>T: {{ number_format($descuentoTaller, 2) }}%</div>
                             </x-td>
 
-                            <x-td class="text-sm {{ $precioPublicoOk ? 'text-gray-500' : 'text-red-700 font-bold' }}">
+                            <x-td class="text-sm {{ $precioPublicoOk ? 'text-gray-500' : 'text-red-700 font-bold' }} align-top">
                                 ${{ number_format($marcaN['PrecioC'], 2) }}
                                 @if(!$precioPublicoOk)
                                 <span class="text-[9px] block text-red-600">❌ Pérdida</span>
                                 @endif
                             </x-td>
 
-                            <x-td class="text-sm {{ $precioMayoreoOk ? 'text-gray-500' : 'text-red-700 font-bold' }}">
+                            <x-td class="text-sm {{ $precioMayoreoOk ? 'text-gray-500' : 'text-red-700 font-bold' }} align-top">
                                 ${{ number_format($marcaN['PrecioM'], 2) }}
                                 @if(!$precioMayoreoOk)
                                 <span class="text-[9px] block text-red-600">❌ Pérdida</span>
                                 @endif
                             </x-td>
 
-                            <x-td class="text-sm {{ $precioTallerOk ? 'text-gray-500' : 'text-red-700 font-bold' }}">
+                            <x-td class="text-sm {{ $precioTallerOk ? 'text-gray-500' : 'text-red-700 font-bold' }} align-top">
                                 ${{ number_format($marcaN['PrecioT'], 2) }}
                                 @if(!$precioTallerOk)
                                 <span class="text-[9px] block text-red-600">❌ Pérdida</span>
                                 @endif
                             </x-td>
 
-                            <x-td class="text-sm text-gray-500">
+                            <x-td class="text-sm text-gray-500 align-top">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
                                     ≥ {{ $marcaN['cantidadMayoreo'] ?? 3 }} uds.
                                 </span>
                             </x-td>
 
-                            <x-td class="text-right text-sm">
+                            <x-td class="text-right text-sm align-top">
+                                <button type="button"
+                                        wire:click="cargarMarcaParaEdicion({{ $index }})"
+                                        class="text-indigo-600 hover:text-indigo-900 font-medium mr-3">
+                                    Editar
+                                </button>
                                 <button type="button"
                                         wire:click="quitarMarca({{ $index }})"
                                         class="text-red-600 hover:text-red-900 font-medium">

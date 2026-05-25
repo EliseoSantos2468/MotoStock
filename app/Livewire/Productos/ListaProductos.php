@@ -92,13 +92,22 @@ class ListaProductos extends Component
     public $PrecioM        = 0;
     public $PrecioT        = 0;
     public $cantidadMayoreo = 3; // ← NUEVO: default 3
+    public $marcaEditandoIndex = null;
 
     // modales
     public $modalProducto     = false;
     public $modalActualizar   = false;
     public $modalConfirm      = false;
+    public $modalStock       = false;
     public $modalConfirmTitle = '';
     public $modalConfirmContent = '';
+
+    public $stock_producto_id;
+    public $stock_producto_nombre = '';
+    public $stock_marca_id = '';
+    public $stock_cantidad = 1;
+    public $stock_operacion = 'aumentar';
+    public $stock_marcas = [];
 
     // lógica
     public $form = '';
@@ -161,11 +170,19 @@ class ListaProductos extends Component
             'PrecioM',
             'PrecioT',
             'cantidadMayoreo',   // ← NUEVO
+            'marcaEditandoIndex',
             'modalProducto',
             'modalActualizar',
             'modalConfirm',
+            'modalStock',
             'modalConfirmTitle',
             'modalConfirmContent',
+            'stock_producto_id',
+            'stock_producto_nombre',
+            'stock_marca_id',
+            'stock_cantidad',
+            'stock_operacion',
+            'stock_marcas',
         ]);
     }
 
@@ -249,6 +266,7 @@ class ListaProductos extends Component
         $this->modalConfirmTitle  = '¿Editar Producto?';
         $this->modalConfirmContent = '¿Desea Editar el Producto?';
         $this->modalProducto      = true;
+        $this->marcaEditandoIndex = null;
     }
 
     public function editar()
@@ -264,6 +282,10 @@ class ListaProductos extends Component
             $pivoteDatos = [];
 
             foreach ($this->marcas_nuevas as $item) {
+                $precioPublico = $this->calcularPrecioPorPorcentaje((float) $item['PrecioCosto'], (float) $item['PorcentajePublico']);
+                $precioMayoreo = $this->calcularPrecioPorPorcentaje((float) $item['PrecioCosto'], (float) $item['PorcentajeMayoreo']);
+                $precioTaller = $this->calcularPrecioPorPorcentaje((float) $item['PrecioCosto'], (float) $item['PorcentajeTaller']);
+
                 $pivoteDatos[$item['idMarca']] = [
                     'cantidad'         => $item['cantidadMarca'],
                     'cantidad_mayoreo' => $item['cantidadMayoreo'],  // ← NUEVO
@@ -271,9 +293,9 @@ class ListaProductos extends Component
                     'porcentaje_publico' => $item['PorcentajePublico'],
                     'porcentaje_mayoreo' => $item['PorcentajeMayoreo'],
                     'porcentaje_taller'  => $item['PorcentajeTaller'],
-                    'precio_cliente'   => $item['PrecioC'],
-                    'precio_mayoreo'   => $item['PrecioM'],
-                    'precio_taller'     => $item['PrecioT'],
+                    'precio_cliente'   => $precioPublico,
+                    'precio_mayoreo'   => $precioMayoreo,
+                    'precio_taller'     => $precioTaller,
                     'venta_producto'   => 0,
                 ];
             }
@@ -285,6 +307,88 @@ class ListaProductos extends Component
         } catch (\Exception $e) {
             session()->flash('error', 'No se pudo editar: ' . $e->getMessage());
         }
+    }
+
+    public function abrirStock($id)
+    {
+        $producto = Producto::with('marcas')->findOrFail($id);
+
+        $this->stock_producto_id = $producto->id;
+        $this->stock_producto_nombre = $producto->nombre_producto;
+        $this->stock_marcas = $producto->marcas->map(function ($marca) {
+            return [
+                'id' => $marca->id,
+                'nombre' => $marca->nombre_marca,
+                'cantidad' => (int) ($marca->pivot->cantidad ?? 0),
+            ];
+        })->values()->all();
+
+        if (empty($this->stock_marcas)) {
+            session()->flash('error', 'Este producto no tiene marcas asociadas para ajustar stock.');
+            return;
+        }
+
+        $this->stock_marca_id = $this->stock_marcas[0]['id'] ?? '';
+        $this->stock_cantidad = 1;
+        $this->stock_operacion = 'aumentar';
+        $this->modalStock = true;
+    }
+
+    public function cerrarStock()
+    {
+        $this->modalStock = false;
+
+        $this->reset([
+            'stock_producto_id',
+            'stock_producto_nombre',
+            'stock_marca_id',
+            'stock_cantidad',
+            'stock_operacion',
+            'stock_marcas',
+        ]);
+    }
+
+    public function ajustarStock(string $operacion)
+    {
+        $this->validate([
+            'stock_producto_id' => ['required', 'integer', Rule::exists('producto', 'id')->where('user_id', Auth::id())],
+            'stock_marca_id' => ['required', 'integer', Rule::exists('marca', 'id')->where('user_id', Auth::id())],
+            'stock_cantidad' => ['required', 'integer', 'min:1'],
+        ]);
+
+        try {
+            $producto = Producto::with('marcas')->findOrFail($this->stock_producto_id);
+            $marca = $producto->marcas->firstWhere('id', (int) $this->stock_marca_id);
+
+            if (!$marca) {
+                $this->addError('stock_marca_id', 'La marca seleccionada no pertenece a este producto.');
+                return;
+            }
+
+            $cantidadActual = (int) ($marca->pivot->cantidad ?? 0);
+            $cantidadMovimiento = (int) $this->stock_cantidad;
+            $nuevaCantidad = $operacion === 'disminuir'
+                ? $cantidadActual - $cantidadMovimiento
+                : $cantidadActual + $cantidadMovimiento;
+
+            if ($nuevaCantidad < 0) {
+                $this->addError('stock_cantidad', 'No puedes disminuir más stock del que existe.');
+                return;
+            }
+
+            DB::transaction(function () use ($producto, $marca, $nuevaCantidad) {
+                $producto->marcas()->updateExistingPivot($marca->id, [
+                    'cantidad' => $nuevaCantidad,
+                ]);
+            });
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo ajustar el stock: ' . $e->getMessage());
+
+            return;
+        }
+
+        $this->cerrarStock();
+        $this->dispatch('producto-stock-actualizado');
     }
 
     // ──────────────────────────────────────────────
@@ -336,19 +440,19 @@ class ListaProductos extends Component
             'cantidadMayoreo' => 'required|integer|min:1',  // ← NUEVO
         ]);
 
-        // ✓ Validar jerarquía: Público >= Mayoreo >= Taller
-        if ((float) $this->PorcentajePublico < (float) $this->PorcentajeMayoreo) {
-            $this->addError('PorcentajePublico', '❌ El % de Ganancia Público debe ser ≥ al % de Mayoreo. Público está menor.');
-            return;
-        }
-
-        if ((float) $this->PorcentajeMayoreo < (float) $this->PorcentajeTaller) {
-            $this->addError('PorcentajeMayoreo', '❌ El % de Ganancia Mayoreo debe ser ≥ al % de Taller. Mayoreo está menor.');
-            return;
-        }
-
+        // ✓ Validar jerarquía: Público >= Taller >= Mayoreo
         if ((float) $this->PorcentajePublico < (float) $this->PorcentajeTaller) {
-            $this->addError('PorcentajeTaller', '❌ El % de Ganancia Taller debe ser ≤ al % de Público.');
+            $this->addError('PorcentajePublico', '❌ El % de Ganancia Público debe ser ≥ al % de Taller.');
+            return;
+        }
+
+        if ((float) $this->PorcentajeTaller < (float) $this->PorcentajeMayoreo) {
+            $this->addError('PorcentajeTaller', '❌ El % de Ganancia Taller debe ser ≥ al % de Mayoreo.');
+            return;
+        }
+
+        if ((float) $this->PorcentajePublico < (float) $this->PorcentajeMayoreo) {
+            $this->addError('PorcentajePublico', '❌ El % de Ganancia Público debe ser ≥ al % de Mayoreo.');
             return;
         }
 
@@ -356,37 +460,11 @@ class ListaProductos extends Component
         $precioMayoreo = $this->calcularPrecioPorPorcentaje((float) $this->PrecioCosto, (float) $this->PorcentajeMayoreo);
         $precioTaller = $this->calcularPrecioPorPorcentaje((float) $this->PrecioCosto, (float) $this->PorcentajeTaller);
 
-        // Si la marca ya existe en la lista → actualizar
-        foreach ($this->marcas_nuevas as $index => $marcaExistente) {
-            if ((int) $marcaExistente['idMarca'] === (int) $this->idMarca) {
-                $this->marcas_nuevas[$index]['cantidadMarca']   = (int) $marcaExistente['cantidadMarca'] + (int) $this->cantidadMarca;
-                $this->marcas_nuevas[$index]['PrecioCosto']     = (float) $this->PrecioCosto;
-                $this->marcas_nuevas[$index]['PorcentajePublico'] = (float) $this->PorcentajePublico;
-                $this->marcas_nuevas[$index]['PorcentajeMayoreo'] = (float) $this->PorcentajeMayoreo;
-                $this->marcas_nuevas[$index]['PorcentajeTaller']  = (float) $this->PorcentajeTaller;
-                $this->marcas_nuevas[$index]['PrecioC']         = $precioPublico;
-                $this->marcas_nuevas[$index]['PrecioM']         = $precioMayoreo;
-                $this->marcas_nuevas[$index]['PrecioT']         = $precioTaller;
-                $this->marcas_nuevas[$index]['cantidadMayoreo'] = (int) $this->cantidadMayoreo; // ← NUEVO
-
-                $this->reset(['idMarca', 'cantidadMarca', 'PrecioCosto', 'PorcentajePublico', 'PorcentajeMayoreo', 'PorcentajeTaller', 'PrecioC', 'PrecioM', 'PrecioT', 'cantidadMayoreo']);
-                return;
-            }
-        }
-
-        // Nueva marca
-        $marcaInfo = Marca::find($this->idMarca);
-
-        if (!$marcaInfo) {
-            $this->addError('idMarca', 'La marca seleccionada no es válida.');
-            return;
-        }
-
-        $this->marcas_nuevas[] = [
-            'idMarca'         => $this->idMarca,
-            'nombreMarca'     => $marcaInfo->nombre_marca,
-            'cantidadMarca'   => $this->cantidadMarca,
-            'cantidadMayoreo' => $this->cantidadMayoreo,  // ← NUEVO
+        $marcaActualizada = [
+            'idMarca'         => (int) $this->idMarca,
+            'nombreMarca'     => Marca::find($this->idMarca)?->nombre_marca ?? 'Sin nombre',
+            'cantidadMarca'   => (int) $this->cantidadMarca,
+            'cantidadMayoreo' => (int) $this->cantidadMayoreo,
             'PrecioCosto'     => (float) $this->PrecioCosto,
             'PorcentajePublico' => (float) $this->PorcentajePublico,
             'PorcentajeMayoreo' => (float) $this->PorcentajeMayoreo,
@@ -396,7 +474,26 @@ class ListaProductos extends Component
             'PrecioT'         => $precioTaller,
         ];
 
-        $this->reset(['idMarca', 'cantidadMarca', 'PrecioCosto', 'PorcentajePublico', 'PorcentajeMayoreo', 'PorcentajeTaller', 'PrecioC', 'PrecioM', 'PrecioT', 'cantidadMayoreo']);
+        if ($this->marcaEditandoIndex !== null && isset($this->marcas_nuevas[$this->marcaEditandoIndex])) {
+            $this->marcas_nuevas[$this->marcaEditandoIndex] = $marcaActualizada;
+            $this->fusionarMarcasRepetidas($this->marcaEditandoIndex);
+            $this->limpiarFormularioMarca();
+            return;
+        }
+
+        // Si la marca ya existe en la lista → actualizar su fila
+        foreach ($this->marcas_nuevas as $index => $marcaExistente) {
+            if ((int) $marcaExistente['idMarca'] === (int) $this->idMarca) {
+                $this->marcas_nuevas[$index] = array_merge($marcaExistente, $marcaActualizada, [
+                    'cantidadMarca' => (int) $marcaActualizada['cantidadMarca'] + (int) $marcaExistente['cantidadMarca'],
+                ]);
+                $this->limpiarFormularioMarca();
+                return;
+            }
+        }
+
+        $this->marcas_nuevas[] = $marcaActualizada;
+        $this->limpiarFormularioMarca();
     }
 
     public function quitarMarca($index)
@@ -405,6 +502,33 @@ class ListaProductos extends Component
             unset($this->marcas_nuevas[$index]);
         }
         $this->marcas_nuevas = array_values($this->marcas_nuevas);
+
+        if ($this->marcaEditandoIndex === $index) {
+            $this->limpiarFormularioMarca();
+        }
+    }
+
+    public function cargarMarcaParaEdicion($index)
+    {
+        if (!isset($this->marcas_nuevas[$index])) {
+            return;
+        }
+
+        $marca = $this->marcas_nuevas[$index];
+
+        $this->marcaEditandoIndex = $index;
+        $this->idMarca = $marca['idMarca'] ?? '';
+        $this->cantidadMarca = $marca['cantidadMarca'] ?? 0;
+        $this->PrecioCosto = $marca['PrecioCosto'] ?? 0;
+        $this->PorcentajePublico = $marca['PorcentajePublico'] ?? 0;
+        $this->PorcentajeMayoreo = $marca['PorcentajeMayoreo'] ?? 0;
+        $this->PorcentajeTaller = $marca['PorcentajeTaller'] ?? 0;
+        $this->cantidadMayoreo = $marca['cantidadMayoreo'] ?? 3;
+    }
+
+    public function cancelarEdicionMarca()
+    {
+        $this->limpiarFormularioMarca();
     }
 
     // ──────────────────────────────────────────────
@@ -432,7 +556,7 @@ class ListaProductos extends Component
             'nombre_producto'                      => ['required', 'string', 'min:2', 'max:255', $uniqueRule],
             'descripcion_producto'                 => ['required', 'string', 'min:5', 'max:355'],
             'marcas_nuevas'                        => ['required', 'array', 'min:1'],
-            'marcas_nuevas.*.idMarca'              => ['required', 'integer', Rule::exists('marca', 'id')->where('user_id', Auth::id())],
+            'marcas_nuevas.*.idMarca'              => ['required', 'integer', 'distinct', Rule::exists('marca', 'id')->where('user_id', Auth::id())],
             'marcas_nuevas.*.cantidadMarca'        => ['required', 'integer', 'min:1'],
             'marcas_nuevas.*.cantidadMayoreo'      => ['required', 'integer', 'min:1'],
             'marcas_nuevas.*.PrecioCosto'          => ['required', 'numeric', 'min:0'],
@@ -445,5 +569,44 @@ class ListaProductos extends Component
     private function calcularPrecioPorPorcentaje(float $precioCosto, float $porcentaje): float
     {
         return round($precioCosto * (1 + ($porcentaje / 100)), 2);
+    }
+
+    private function limpiarFormularioMarca(): void
+    {
+        $this->marcaEditandoIndex = null;
+        $this->reset(['idMarca', 'cantidadMarca', 'PrecioCosto', 'PorcentajePublico', 'PorcentajeMayoreo', 'PorcentajeTaller', 'PrecioC', 'PrecioM', 'PrecioT', 'cantidadMayoreo']);
+        $this->cantidadMayoreo = 3;
+    }
+
+    private function fusionarMarcasRepetidas(int $indiceOrigen): void
+    {
+        if (!isset($this->marcas_nuevas[$indiceOrigen])) {
+            return;
+        }
+
+        $marcaOrigen = $this->marcas_nuevas[$indiceOrigen];
+
+        foreach ($this->marcas_nuevas as $indiceDestino => $marcaExistente) {
+            if ($indiceDestino === $indiceOrigen) {
+                continue;
+            }
+
+            if ((int) ($marcaExistente['idMarca'] ?? 0) !== (int) ($marcaOrigen['idMarca'] ?? 0)) {
+                continue;
+            }
+
+            $this->marcas_nuevas[$indiceDestino] = array_merge($marcaExistente, $marcaOrigen, [
+                'cantidadMarca' => (int) ($marcaExistente['cantidadMarca'] ?? 0) + (int) ($marcaOrigen['cantidadMarca'] ?? 0),
+            ]);
+
+            unset($this->marcas_nuevas[$indiceOrigen]);
+            $this->marcas_nuevas = array_values($this->marcas_nuevas);
+
+            if ($this->marcaEditandoIndex !== null) {
+                $this->marcaEditandoIndex = $indiceDestino;
+            }
+
+            break;
+        }
     }
 }

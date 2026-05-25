@@ -361,7 +361,7 @@ class Ventas extends Component
                 $destinatario = $this->emailFacturacion;
             }
 
-            $correoCopia = 'edraslazo503@gmail.com';
+            $correoCopia = 'sotosalvador53@gmail.com';
 
             if ($destinatario && strcasecmp($destinatario, $correoCopia) !== 0) {
                 Mail::to($destinatario)

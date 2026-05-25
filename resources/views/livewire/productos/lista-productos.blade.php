@@ -10,6 +10,9 @@
     <x-action-message class="mr-3" on="producto-actualizado">
         {{ __('Producto Actualizado con éxito!') }}
     </x-action-message>
+    <x-action-message class="mr-3" on="producto-stock-actualizado">
+        {{ __('Stock actualizado con éxito!') }}
+    </x-action-message>
 
     {{-- Modal Producto --}}
     <x-dialog-modal wire:model.live="modalProducto">
@@ -28,6 +31,7 @@
                     :form="$form"
                     :marcas="$marcas"
                     :marcas_nuevas="$marcas_nuevas"
+                    :marca-editando-index="$marcaEditandoIndex"
                     :precio-costo="$PrecioCosto"
                     :porcentaje-publico="$PorcentajePublico"
                     :porcentaje-mayoreo="$PorcentajeMayoreo"
@@ -66,6 +70,58 @@
         </x-slot>
     </x-confirmation-modal>
     {{-- Fin Modal Confirmación --}}
+
+    {{-- Modal Stock --}}
+    <x-dialog-modal wire:model.live="modalStock">
+        <x-slot name="title">
+            Control de Stock
+        </x-slot>
+
+        <x-slot name="content">
+            <div class="space-y-4">
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Producto</p>
+                    <p class="text-lg font-bold text-slate-900">{{ $stock_producto_nombre }}</p>
+                </div>
+
+                <div>
+                    <x-label for="stock_marca_id" value="Marca" />
+                    <select id="stock_marca_id" wire:model="stock_marca_id" class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                        @foreach ($stock_marcas as $marca)
+                            <option value="{{ $marca['id'] }}">{{ $marca['nombre'] }} - stock actual {{ $marca['cantidad'] }}</option>
+                        @endforeach
+                    </select>
+                    <x-input-error for="stock_marca_id" class="mt-1" />
+                </div>
+
+                <div>
+                    <x-label for="stock_cantidad" value="Cantidad a mover" />
+                    <x-input id="stock_cantidad" type="number" min="1" class="mt-1 block w-full" wire:model="stock_cantidad" />
+                    <x-input-error for="stock_cantidad" class="mt-1" />
+                </div>
+
+                <p class="text-sm text-gray-600">
+                    Usa <span class="font-semibold text-emerald-700">Aumentar</span> para sumar unidades o
+                    <span class="font-semibold text-rose-700">Disminuir</span> para restarlas sin dejar el stock en negativo.
+                </p>
+            </div>
+        </x-slot>
+
+        <x-slot name="footer">
+            <x-secondary-button wire:click="cerrarStock">
+                Cancelar
+            </x-secondary-button>
+
+            <x-button wire:click="ajustarStock('aumentar')" class="ml-3 bg-emerald-600 hover:bg-emerald-700">
+                Aumentar
+            </x-button>
+
+            <x-button wire:click="ajustarStock('disminuir')" class="ml-3 bg-rose-600 hover:bg-rose-700">
+                Disminuir
+            </x-button>
+        </x-slot>
+    </x-dialog-modal>
+    {{-- Fin Modal Stock --}}
 
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -207,6 +263,9 @@
 
                 <x-td class="flex justify-end gap-2 text-right text-sm font-medium">
                     <x-btn-editar wire:click="editarProducto({{ $producto->id }})" />
+                    <button type="button" wire:click="abrirStock({{ $producto->id }})" class="inline-flex items-center rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                        Stock
+                    </button>
                     <x-btn-eliminar wire:click="eliminarProducto({{ $producto->id }})" />
                     <x-btn-ver wire:click="show({{ $producto->id }})" />
                 </x-td>
