@@ -17,12 +17,45 @@
                 </div>
                 <div>
                     <x-label value="Teléfono" />
-                    <x-input wire:model="telefono" class="w-full mt-1" placeholder="0000-0000" />
+                    <div class="flex gap-2 mt-1">
+                        <select wire:model.live="codigo_pais"
+                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                            @foreach ($paises as $codigo => $nombre)
+                                <option value="{{ $codigo }}">{{ $nombre }}</option>
+                            @endforeach
+                        </select>
+                        <x-input
+                            wire:model.live="telefono"
+                            type="tel"
+                            inputmode="numeric"
+                            maxlength="{{ $telefonoMaxlength }}"
+                            class="w-full"
+                            placeholder="{{ $telefonoPlaceholder }}"
+                            x-on:input="
+                                const ca = ['HN','GT','SV','NI','CR','PA'];
+                                const country = $wire.codigo_pais;
+                                let v = $event.target.value;
+                                if (ca.includes(country)) {
+                                    let d = v.replace(/\D/g, '').slice(0, 8);
+                                    v = d.length > 4 ? d.slice(0, 4) + '-' + d.slice(4) : d;
+                                } else if (['MX','CO','VE','AR'].includes(country)) {
+                                    v = v.replace(/[^0-9\-\s]/g, '').slice(0, 12);
+                                } else if (['US','CA'].includes(country)) {
+                                    v = v.replace(/[^0-9\-\s\(\)]/g, '').slice(0, 14);
+                                } else {
+                                    v = v.replace(/[^0-9\+\-\s\(\)\.]/g, '').slice(0, 20);
+                                }
+                                $event.target.value = v;
+                            "
+                        />
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">{{ $telefonoFormato }}</p>
                     <x-input-error for="telefono" class="mt-1" />
                 </div>
                 <div>
                     <x-label value="Correo electrónico" />
-                    <x-input wire:model="email" type="email" class="w-full mt-1" placeholder="correo@proveedor.com" />
+                    <x-input wire:model="email" type="email" class="w-full mt-1" placeholder="correo@dominio.com" />
+                    <p class="text-xs text-gray-400 mt-1">Formato: usuario@dominio.com</p>
                     <x-input-error for="email" class="mt-1" />
                 </div>
             </form>
