@@ -6,7 +6,12 @@ use App\Livewire\Configuracion\Ajustes;
 use App\Livewire\Marcas\ListaMarcas;
 use App\Livewire\Productos\ListaProductos;
 use App\Livewire\Productos\VerProductos;
+use App\Exports\FacturaCompraExport;
+use App\Livewire\Proveedores\ListaProveedores;
+use App\Livewire\Recepciones\FormRecepcion;
+use App\Livewire\Recepciones\ListaRecepciones;
 use App\Livewire\Ventas;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Cliente;
 use App\Models\Recibo;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -161,6 +166,26 @@ Route::get('/productos/{producto}', VerProductos::class)->name('ver-producto');
 
 // --- VENTAS ---
 Route::get('/ventas', Ventas::class)->name('ventas');
+
+// --- PROVEEDORES ---
+Route::get('/proveedores', ListaProveedores::class)->name('lista-proveedores');
+
+// --- RECEPCIÓN DE MERCANCÍA ---
+Route::get('/recepciones', ListaRecepciones::class)->name('lista-recepciones');
+Route::get('/recepciones/nueva', FormRecepcion::class)->name('nueva-recepcion');
+Route::get('/recepciones/{facturaCompra}', FormRecepcion::class)->name('ver-recepcion');
+Route::get('/recepciones/{facturaCompra}/excel', function (\App\Models\FacturaCompra $facturaCompra) {
+    $nombre = 'factura-' . str_replace(['/', '\\', ' '], '-', $facturaCompra->numero_factura) . '.xlsx';
+    return Excel::download(new FacturaCompraExport($facturaCompra->load(['proveedor', 'detalles.producto', 'detalles.marca'])), $nombre);
+})->middleware(['auth'])->name('recepcion.excel');
+
+Route::get('/recepciones/{facturaCompra}/pdf', function (\App\Models\FacturaCompra $facturaCompra) {
+    $factura = $facturaCompra->load(['proveedor', 'detalles.producto', 'detalles.marca']);
+    $nombre  = 'factura-' . str_replace(['/', '\\', ' '], '-', $factura->numero_factura) . '.pdf';
+    return Pdf::loadView('pdf.factura-compra', compact('factura'))
+        ->setPaper('a4', 'landscape')
+        ->stream($nombre);
+})->middleware(['auth'])->name('recepcion.pdf');
 
 // --- CONFIGURACIÓN (Esta es la que causaba el error anterior) ---
 Route::get('/configuracion', Ajustes::class)->name('configuracion');

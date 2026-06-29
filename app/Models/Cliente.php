@@ -27,7 +27,7 @@ class Cliente extends Model
     ];
     
     public function clasificacion(){
-        return $this->belongsTo(clasificacion::class, 'id_clasificacion');
+        return $this->belongsTo(Clasificacion::class, 'id_clasificacion');
     }
 
     public function departamento(){
@@ -43,7 +43,7 @@ class Cliente extends Model
     }
 
     public function referencias(){
-        return $this->belongsToMany(referencia::class, 'cliente_referencia')->withTimestamps();
+        return $this->belongsToMany(Referencia::class, 'cliente_referencia')->withTimestamps();
     }
 
     public function productos(){

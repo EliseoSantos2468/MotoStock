@@ -84,6 +84,25 @@
                     <span class="nav-label">Kardex e Inventario</span>
                 </a>
             </li>
+
+            <li class="nav-item dropdown-container">
+                <a href="#" class="nav-link dropdown-toggler flex items-center px-4 py-3 hover:bg-gray-800 transition-colors">
+                    <svg class="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                        <rect x="9" y="3" width="6" height="4" rx="1" />
+                        <path d="M9 12h6" /> <path d="M9 16h4" />
+                    </svg>
+                    <span class="nav-label flex-1">Compras</span>
+                </a>
+                <ul class="dropdown-menu overflow-hidden transition-all duration-300 h-0" style="background-color: {{$secondaryColor}}">
+                    <li class="nav-item">
+                        <a wire:navigate href="{{ route('lista-proveedores') }}" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Proveedores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a wire:navigate href="{{ route('lista-recepciones') }}" class="nav-link px-12 py-2 text-sm text-gray-300 hover:text-white">Recepción de Mercancía</a>
+                    </li>
+                </ul>
+            </li>
         </ul>
 
         <ul class="nav-list secondary-nav mt-10 pt-10 border-t border-gray-800 space-y-2">

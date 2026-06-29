@@ -13,7 +13,7 @@ class Departamento extends Model
     ];
 
     public function clientes(){
-        return $this->hasMany(cliente::class);
+        return $this->hasMany(Cliente::class);
     }
 
     public function municipios(){
