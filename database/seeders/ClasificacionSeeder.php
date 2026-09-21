@@ -13,11 +13,15 @@ class ClasificacionSeeder extends Seeder
      */
     public function run(): void
     {
+        $user = \App\Models\User::first();
+        if (!$user) return;
+
         $categorias = ['Frecuente', 'Moroso', 'Nuevo'];
 
         foreach($categorias as $categoria){
             Clasificacion::updateOrCreate(
-                ['nombre_clasificacion' => $categoria]
+                ['nombre_clasificacion' => $categoria, 'user_id' => $user->id],
+                ['nombre_clasificacion' => $categoria, 'user_id' => $user->id]
             );
         }
     }

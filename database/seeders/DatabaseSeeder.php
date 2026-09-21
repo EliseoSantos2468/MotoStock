@@ -31,10 +31,10 @@ class DatabaseSeeder extends Seeder
 
         // seeders
         $this->call([
-            ReferenciasPersonalesSeeder::class,
+            DepartamentoMunicipioSeeder::class,
             ClasificacionSeeder::class,
             InteresSeeder::class,
-            DepartamentoMunicipioSeeder::class,
+            ReferenciasPersonalesSeeder::class,
             MarcaSeeder::class,
             ProductoSeeder::class,
             ProductoMarcaSeeder::class,

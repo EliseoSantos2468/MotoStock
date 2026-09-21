@@ -8,6 +8,7 @@ use App\Models\Marca;
 use App\Models\Producto;
 use App\Models\Recibo;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
@@ -29,12 +30,18 @@ class Ventas extends Component
     public $marcaSeleccionada;
     public $cantidadAVender = 1;
     public $stockMaximo = 0;
+    // estado de validación para la cantidad
+    public $cantidadError = null;
+    public $puedeAgregar = true;
 
     // clientes
     public $tipoCliente = 'registrado';
+    public $tipoClienteCompra = 'normal'; // 'normal' o 'tallerista'
     public $clienteId = null;
+    public $nombreInvitado = '';
     public $emailFacturacion = '';
     public $busquedaCliente = '';
+    public $listaClientesCacheada = []; // Cache de clientes para evitar recalcular en cada render
 
     #[Layout('layouts.app')]
     public function render()
@@ -53,27 +60,35 @@ class Ventas extends Component
             })
             ->paginate(10);
 
-        //obtener clientes
-        $listaClientes = [];
+        return view('livewire.ventas', [
+            'productos' => $productos,
+            'listaClientes' => $this->listaClientesCacheada
+        ]);
+    }
+
+    /**
+     * Busca clientes con debounce automático (Livewire lo maneja)
+     * Se ejecuta solo cuando cambia busquedaCliente, no en cada render
+     */
+    public function updatedBusquedaCliente($value)
+    {
         if ($this->tipoCliente == 'registrado') {
-            $busquedaCliente = trim((string) $this->busquedaCliente);
+            $busquedaCliente = trim((string) $value);
             if ($busquedaCliente !== '') {
-                $listaClientes = Cliente::where(function ($query) use ($busquedaCliente) {
+                $this->listaClientesCacheada = Cliente::where(function ($query) use ($busquedaCliente) {
                     $search = '%' . Str::lower($busquedaCliente) . '%';
 
                     $query->whereRaw('LOWER(nombres_cliente) LIKE ?', [$search])
                         ->orWhereRaw('LOWER(apellidos_cliente) LIKE ?', [$search])
                         ->orWhereRaw('LOWER(dui_cliente) LIKE ?', [$search]);
                 })
+                    ->where('user_id', Auth::id())
                     ->take(5)
                     ->get();
+            } else {
+                $this->listaClientesCacheada = [];
             }
         }
-
-        return view('livewire.ventas', [
-            'productos' => $productos,
-            'listaClientes' => $listaClientes
-        ]);
     }
 
     public function seleccionarProducto($id)
@@ -83,31 +98,80 @@ class Ventas extends Component
         $this->modalSeleccion = true;
     }
 
-    public function updatedMarcaSeleccionada($value){
-        if($value && $this->productoSeleccionado){
+    public function updatedMarcaSeleccionada($value)
+    {
+        if ($value && $this->productoSeleccionado) {
             $marca = $this->productoSeleccionado->marcas->where('id', $value)->first();
 
-            if($marca){
+            if ($marca) {
                 $this->stockMaximo = $marca->pivot->cantidad;
 
                 $this->cantidadAVender = ($this->stockMaximo > 0) ? 1 : 0;
+                $this->cantidadError = null;
+                $this->puedeAgregar = ($this->stockMaximo > 0);
             }
-        }else{
+        } else {
             $this->stockMaximo = 0;
             $this->cantidadAVender = 1;
+            $this->cantidadError = null;
+            $this->puedeAgregar = true;
         }
     }
 
-    public function updatedCantidadAVender($value){
-        if($value < 0 && $this->stockMaximo > 0 && $value){
-            $this->cantidadAVender = 1;
+    public function updatedCantidadAVender($value)
+    {
+        // No corregir automáticamente el valor ingresado. Solo validar y
+        // establecer mensajes/estado para deshabilitar el botón hasta que
+        // el usuario ingrese un valor válido.
+
+        // Campo vacío: mostrar error y deshabilitar añadir
+        if ($value === '' || is_null($value)) {
+            $this->cantidadError = 'Ingresa un dato válido.';
+            $this->puedeAgregar = false;
+            return;
         }
+
+        // Si no es numérico: mensaje y deshabilitar
+        if (!is_numeric($value)) {
+            $this->cantidadError = 'Ingresa un número válido.';
+            $this->puedeAgregar = false;
+            return;
+        }
+
+        $valorInt = (int) $value;
+
+        // Si es menor a 1: mensaje y deshabilitar (no corregir a 1)
+        if ($valorInt < 1) {
+            $this->cantidadError = 'La cantidad mínima es 1.';
+            $this->puedeAgregar = false;
+            return;
+        }
+
+        // Si supera el stock: mensaje y deshabilitar (no corregir el input)
+        if ($this->stockMaximo > 0 && $valorInt > $this->stockMaximo) {
+            $this->cantidadError = 'No hay suficiente stock disponible.';
+            $this->puedeAgregar = false;
+            return;
+        }
+
+        // Valor válido
+        $this->cantidadError = null;
+        $this->puedeAgregar = true;
     }
 
     public function agregarAlCarrito()
     {
+        if (!$this->puedeAgregar) {
+            $this->addError('cantidadAVender', $this->cantidadError ?? 'La cantidad no es válida para agregar.');
+            return;
+        }
+
         $this->validate([
-            'marcaSeleccionada' => ['required', 'integer', Rule::exists('marca', 'id')],
+            'marcaSeleccionada' => [
+                'required',
+                'integer',
+                Rule::exists('marca', 'id')->where('user_id', Auth::id()),
+            ],
             'cantidadAVender' => ['required', 'integer', 'min:1'],
         ], [
             'marcaSeleccionada.required' => 'Selecciona una marca.',
@@ -137,22 +201,38 @@ class Ventas extends Component
             return;
         }
 
-        $subtotal = $marcaInfo->pivot->precio_cliente * $this->cantidadAVender;
+        // Determinar el precio según el tipo de cliente
+        if ($this->tipoClienteCompra === 'tallerista') {
+            // Tallerista siempre obtiene precio de taller
+            $precio = $marcaInfo->pivot->precio_taller ?? $marcaInfo->pivot->precio_cliente;
+            $tipoDescuento = 'Precio Taller';
+        } else {
+            // Cliente normal: aplica mayoreo si cumple cantidad
+            if ($this->cantidadAVender >= $marcaInfo->pivot->cantidad_mayoreo) {
+                $precio = $marcaInfo->pivot->precio_mayoreo;
+                $tipoDescuento = 'Precio Mayoreo';
+            } else {
+                $precio = $marcaInfo->pivot->precio_cliente;
+                $tipoDescuento = 'Precio Público';
+            }
+        }
 
+        $subtotal = $precio * $this->cantidadAVender;
         // Agregamos al carrito (Array en memoria)
         $this->carrito[] = [
             'producto_id' => $this->productoId,
             'nombre'      => $this->productoSeleccionado->nombre_producto,
             'marca_id'    => $this->marcaSeleccionada,
             'marca'       => $marcaInfo->nombre_marca,
-            'precio'      => $marcaInfo->pivot->precio_cliente,
+            'precio'      => $precio,
             'cantidad'    => $this->cantidadAVender,
             'subtotal'    => $subtotal,
+            'tipoDescuento' => $tipoDescuento,
         ];
 
         $this->calcularTotal();
         $this->modalSeleccion = false;
-        $this->reset(['marcaSeleccionada', 'cantidadAVender']);
+        $this->reset(['marcaSeleccionada', 'cantidadAVender', 'cantidadError', 'puedeAgregar']);
     }
 
     public function quitarDelCarrito($index)
@@ -191,7 +271,11 @@ class Ventas extends Component
 
         if ($this->tipoCliente == 'registrado') {
             $this->validate([
-                'clienteId' => ['required', 'integer', Rule::exists('cliente', 'id')],
+                'clienteId' => [
+                    'required',
+                    'integer',
+                    Rule::exists('cliente', 'id')->where('user_id', Auth::id()),
+                ],
             ], [
                 'clienteId.required' => 'Seleccione un cliente registrado.',
                 'clienteId.exists' => 'El cliente seleccionado no existe.',
@@ -203,9 +287,11 @@ class Ventas extends Component
             }
         } else {
             $this->validate([
-                'emailFacturacion' => ['required', 'email', 'max:255'],
+                'nombreInvitado' => ['nullable', 'string', 'max:255'],
+                'emailFacturacion' => ['nullable', 'email', 'max:255'],
             ], [
-                'emailFacturacion.required' => 'Ingresa el correo para la factura electrónica.',
+                'nombreInvitado.string' => 'El nombre del invitado debe ser texto.',
+                'nombreInvitado.max' => 'El nombre del invitado no debe superar 255 caracteres.',
                 'emailFacturacion.email' => 'El correo para la factura no tiene un formato válido.',
                 'emailFacturacion.max' => 'El correo para la factura no debe superar 255 caracteres.',
             ]);
@@ -217,6 +303,7 @@ class Ventas extends Component
                     'fecha' => now()->format('Y-m-d'),
                     'total' => $this->totalVenta,
                     'id_cliente' => ($this->tipoCliente == 'registrado') ? $this->clienteId : null,
+                    'nombre_invitado' => ($this->tipoCliente == 'invitado') ? (trim((string) $this->nombreInvitado) !== '' ? trim((string) $this->nombreInvitado) : null) : null,
                     'email_invitado' => ($this->tipoCliente == 'invitado') ? $this->emailFacturacion : null,
                 ]);
 
@@ -274,15 +361,22 @@ class Ventas extends Component
                 $destinatario = $this->emailFacturacion;
             }
 
-            if ($destinatario) {
-                Mail::to($destinatario)->send(new EnviarReciboMailable($reciboParaEmail));
+            $correoCopia = 'sotosalvador53@gmail.com';
+
+            if ($destinatario && strcasecmp($destinatario, $correoCopia) !== 0) {
+                Mail::to($destinatario)
+                    ->cc($correoCopia)
+                    ->send(new EnviarReciboMailable($reciboParaEmail));
+            } else {
+                Mail::to($correoCopia)->send(new EnviarReciboMailable($reciboParaEmail));
             }
 
-            $this->reset(['carrito', 'totalVenta', 'clienteId', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta']);
+            $this->reset(['carrito', 'totalVenta', 'clienteId', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta', 'tipoClienteCompra']);
+            $this->tipoClienteCompra = 'normal'; // Reiniciar a normal después de cada venta
             $this->resetErrorBag();
 
             $this->dispatch('venta-realizada');
-            $this->dispatch('abrir-ticket', id: $idGenerado);
+            $this->dispatch('abrir-ticket', url: route('recibo.pdf', $idGenerado));
         } catch (\Exception $e) {
             session()->flash('error', 'Ocurrió un error al procesar la venta: ' . $e->getMessage());
         }
@@ -290,11 +384,49 @@ class Ventas extends Component
 
     public function updatedTipoCliente()
     {
-        $this->reset(['clienteId', 'emailFacturacion']);
+        $this->reset(['clienteId', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente']);
+        $this->listaClientesCacheada = [];
         $this->resetErrorBag();
     }
 
-    public function cerrarModal(){
+    public function updatedTipoClienteCompra()
+    {
+        // Recalcular precios del carrito cuando cambia el tipo de cliente
+        if (!empty($this->carrito)) {
+            $productosPorId = Producto::with('marcas')
+                ->whereIn('id', collect($this->carrito)->pluck('producto_id')->unique()->values())
+                ->get()
+                ->keyBy('id');
+
+            foreach ($this->carrito as $index => $item) {
+                $producto = $productosPorId->get($item['producto_id']);
+                if ($producto) {
+                    $marcaInfo = $producto->marcas->where('id', $item['marca_id'])->first();
+                    if ($marcaInfo) {
+                        if ($this->tipoClienteCompra === 'tallerista') {
+                            $precio = $marcaInfo->pivot->precio_taller ?? $marcaInfo->pivot->precio_cliente;
+                            $tipoDescuento = 'Precio Taller';
+                        } else {
+                            if ($item['cantidad'] >= $marcaInfo->pivot->cantidad_mayoreo) {
+                                $precio = $marcaInfo->pivot->precio_mayoreo;
+                                $tipoDescuento = 'Precio Mayoreo';
+                            } else {
+                                $precio = $marcaInfo->pivot->precio_cliente;
+                                $tipoDescuento = 'Precio Público';
+                            }
+                        }
+                        $this->carrito[$index]['precio'] = $precio;
+                        $this->carrito[$index]['subtotal'] = $precio * $item['cantidad'];
+                        $this->carrito[$index]['tipoDescuento'] = $tipoDescuento;
+                    }
+                }
+            }
+            $this->calcularTotal();
+        }
+    }
+
+    public function cerrarModal()
+    {
         $this->reset([
             'modalSeleccion',
             'productoId',
@@ -302,6 +434,8 @@ class Ventas extends Component
             'marcaSeleccionada',
             'cantidadAVender',
             'stockMaximo',
+            'cantidadError',
+            'puedeAgregar',
         ]);
     }
 }

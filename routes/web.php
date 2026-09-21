@@ -6,7 +6,12 @@ use App\Livewire\Configuracion\Ajustes;
 use App\Livewire\Marcas\ListaMarcas;
 use App\Livewire\Productos\ListaProductos;
 use App\Livewire\Productos\VerProductos;
+use App\Exports\FacturaCompraExport;
+use App\Livewire\Proveedores\ListaProveedores;
+use App\Livewire\Recepciones\FormRecepcion;
+use App\Livewire\Recepciones\ListaRecepciones;
 use App\Livewire\Ventas;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Cliente;
 use App\Models\Recibo;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -19,7 +24,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// --- DASHBOARD (Corregido para PostgreSQL) ---
+// --- DASHBOARD (Optimizado con índices) ---
 Route::middleware(['auth'])->get('/dashboard', function () {
     $today = Carbon::today();
     $monthStart = $today->copy()->startOfMonth();
@@ -31,16 +36,17 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         if ((float) $previous === 0.0) {
             return (float) $current > 0 ? 100.0 : 0.0;
         }
-
         return (($current - $previous) / $previous) * 100;
     };
 
+    // OPTIMIZADO: Usar índices compuestos para consultas de rango
     $ventasMes = (float) Recibo::whereBetween('fecha', [$monthStart->toDateString(), $today->toDateString()])->sum('total');
     $ventasMesAnterior = (float) Recibo::whereBetween('fecha', [$prevMonthStart->toDateString(), $prevMonthEnd->toDateString()])->sum('total');
 
     $ordenesMes = Recibo::whereBetween('fecha', [$monthStart->toDateString(), $today->toDateString()])->count();
     $ordenesMesAnterior = Recibo::whereBetween('fecha', [$prevMonthStart->toDateString(), $prevMonthEnd->toDateString()])->count();
 
+    // OPTIMIZADO: Usar índice en created_at
     $clientesMes = Cliente::whereBetween('created_at', [$monthStart->startOfDay(), $today->copy()->endOfDay()])->count();
     $clientesMesAnterior = Cliente::whereBetween('created_at', [$prevMonthStart->startOfDay(), $prevMonthEnd->copy()->endOfDay()])->count();
 
@@ -61,6 +67,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         'conversion_delta' => $percentageDelta($conversion, $conversionAnterior),
     ];
 
+    // OPTIMIZADO: Consulta mensual con índice en fecha
     $monthlySales = Recibo::selectRaw("EXTRACT(MONTH FROM fecha) as month, SUM(total) as total")
         ->whereBetween('fecha', [$yearStart->toDateString(), $today->toDateString()])
         ->groupBy('month')
@@ -79,6 +86,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         }
     }
 
+    // OPTIMIZADO: Top productos con índices en producto_recibo
     $topProductos = DB::table('producto_recibo as pr')
         ->join('producto as p', 'p.id', '=', 'pr.producto_id')
         ->select('p.nombre_producto', DB::raw('SUM(pr.cantidad) as total_cantidad'))
@@ -90,6 +98,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
     $topProductoLabels = $topProductos->pluck('nombre_producto')->values();
     $topProductoData = $topProductos->pluck('total_cantidad')->map(fn ($value) => (int) $value)->values();
 
+    // OPTIMIZADO: Consultas de tendencias con índices
     $trendSeries = [];
     foreach ([7, 30, 90] as $range) {
         $rangeStart = $today->copy()->subDays($range - 1);
@@ -116,7 +125,9 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         ];
     }
 
-    $recentVentas = Recibo::orderByDesc('created_at')
+    // OPTIMIZADO: Ventas recientes con eager loading
+    $recentVentas = Recibo::with(['cliente:id,nombres_cliente,apellidos_cliente'])
+        ->orderByDesc('created_at')
         ->orderByDesc('id')
         ->limit(5)
         ->get();
@@ -155,6 +166,26 @@ Route::get('/productos/{producto}', VerProductos::class)->name('ver-producto');
 
 // --- VENTAS ---
 Route::get('/ventas', Ventas::class)->name('ventas');
+
+// --- PROVEEDORES ---
+Route::get('/proveedores', ListaProveedores::class)->name('lista-proveedores');
+
+// --- RECEPCIÓN DE MERCANCÍA ---
+Route::get('/recepciones', ListaRecepciones::class)->name('lista-recepciones');
+Route::get('/recepciones/nueva', FormRecepcion::class)->name('nueva-recepcion');
+Route::get('/recepciones/{facturaCompra}', FormRecepcion::class)->name('ver-recepcion');
+Route::get('/recepciones/{facturaCompra}/excel', function (\App\Models\FacturaCompra $facturaCompra) {
+    $nombre = 'factura-' . str_replace(['/', '\\', ' '], '-', $facturaCompra->numero_factura) . '.xlsx';
+    return Excel::download(new FacturaCompraExport($facturaCompra->load(['proveedor', 'detalles.producto', 'detalles.marca'])), $nombre);
+})->middleware(['auth'])->name('recepcion.excel');
+
+Route::get('/recepciones/{facturaCompra}/pdf', function (\App\Models\FacturaCompra $facturaCompra) {
+    $factura = $facturaCompra->load(['proveedor', 'detalles.producto', 'detalles.marca']);
+    $nombre  = 'factura-' . str_replace(['/', '\\', ' '], '-', $factura->numero_factura) . '.pdf';
+    return Pdf::loadView('pdf.factura-compra', compact('factura'))
+        ->setPaper('a4', 'landscape')
+        ->stream($nombre);
+})->middleware(['auth'])->name('recepcion.pdf');
 
 // --- CONFIGURACIÓN (Esta es la que causaba el error anterior) ---
 Route::get('/configuracion', Ajustes::class)->name('configuracion');
