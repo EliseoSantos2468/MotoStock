@@ -4,6 +4,7 @@ namespace App\Livewire\Recepciones;
 
 use App\Models\FacturaCompra;
 use App\Models\Proveedor;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -63,8 +64,9 @@ class ListaRecepciones extends Component
             $this->modalConfirm = false;
             $this->factura_id   = null;
             $this->dispatch('factura-eliminada');
-        } catch (\Exception $e) {
-            session()->flash('error', 'No se pudo eliminar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al eliminar factura de compra #' . $this->factura_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo eliminar la factura. Inténtalo de nuevo.');
         }
     }
 

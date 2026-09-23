@@ -3,7 +3,10 @@
 namespace App\Livewire\Proveedores;
 
 use App\Models\Proveedor;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,6 +20,7 @@ class ListaProveedores extends Component
         'nombre_proveedor.string'   => 'El nombre debe ser texto.',
         'nombre_proveedor.min'      => 'El nombre debe tener al menos 2 caracteres.',
         'nombre_proveedor.max'      => 'El nombre no debe superar 255 caracteres.',
+        'nombre_proveedor.unique'   => 'Ya existe un proveedor con ese nombre.',
         'telefono.max'              => 'El teléfono no debe superar 20 caracteres.',
         'telefono.regex'            => 'El formato del teléfono no es válido para el país seleccionado.',
         'email.email'               => 'El correo no tiene un formato válido.',
@@ -92,7 +96,13 @@ class ListaProveedores extends Component
 
     public function editarProveedor(int $id): void
     {
-        $proveedor = Proveedor::findOrFail($id);
+        $proveedor = Proveedor::find($id);
+
+        if (!$proveedor) {
+            session()->flash('error', 'Ese proveedor ya no existe. Puede que haya sido eliminado.');
+            return;
+        }
+
         $this->proveedor_id     = $id;
         $this->nombre_proveedor = $proveedor->nombre_proveedor;
         $this->codigo_pais      = $proveedor->codigo_pais ?? 'HN';
@@ -134,8 +144,9 @@ class ListaProveedores extends Component
             ]);
             $this->cerrarModal();
             $this->dispatch('proveedor-guardado');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al crear proveedor: ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo crear el proveedor. Inténtalo de nuevo.');
         }
     }
 
@@ -150,8 +161,9 @@ class ListaProveedores extends Component
             ]);
             $this->cerrarModal();
             $this->dispatch('proveedor-editado');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al editar proveedor #' . $this->proveedor_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo guardar el proveedor. Inténtalo de nuevo.');
         }
     }
 
@@ -161,8 +173,9 @@ class ListaProveedores extends Component
             Proveedor::findOrFail($this->proveedor_id)->delete();
             $this->cerrarModal();
             $this->dispatch('proveedor-eliminado');
-        } catch (\Exception $e) {
-            session()->flash('error', 'No se pudo eliminar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al eliminar proveedor #' . $this->proveedor_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo eliminar el proveedor. Puede que tenga compras registradas.');
         }
     }
 
@@ -192,8 +205,15 @@ class ListaProveedores extends Component
             $telefonoRules[] = 'regex:' . $this->telefonoRegex();
         }
 
+        $nombreUnique = Rule::unique('proveedores', 'nombre_proveedor')
+            ->where('user_id', Auth::id());
+
+        if ($this->proveedor_id) {
+            $nombreUnique->ignore($this->proveedor_id);
+        }
+
         return [
-            'nombre_proveedor' => ['required', 'string', 'min:2', 'max:255'],
+            'nombre_proveedor' => ['required', 'string', 'min:2', 'max:255', $nombreUnique],
             'telefono'         => $telefonoRules,
             'email'            => ['nullable', 'email', 'max:255'],
         ];

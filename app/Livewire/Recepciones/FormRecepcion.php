@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\Proveedor;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -42,6 +43,7 @@ class FormRecepcion extends Component
     protected $messages = [
         'numeroFactura.required'             => 'El número de factura es obligatorio.',
         'numeroFactura.max'                  => 'El número de factura no debe superar 100 caracteres.',
+        'numeroFactura.unique'               => 'Ya existe una factura de compra con ese número.',
         'fecha.required'                     => 'La fecha es obligatoria.',
         'fecha.date'                         => 'La fecha no tiene un formato válido.',
         'proveedorId.required'               => 'Selecciona un proveedor.',
@@ -137,7 +139,12 @@ class FormRecepcion extends Component
     public function guardarFactura(): void
     {
         $this->validate([
-            'numeroFactura' => ['required', 'string', 'max:100'],
+            'numeroFactura' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('facturas_compra', 'numero_factura')->where('user_id', Auth::id()),
+            ],
             'fecha'         => ['required', 'date'],
             'proveedorId'   => ['required', 'integer', Rule::exists('proveedores', 'id')->where('user_id', Auth::id())],
         ]);
@@ -171,8 +178,9 @@ class FormRecepcion extends Component
             });
 
             $this->redirect(route('ver-recepcion', $factura->id), navigate: true);
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al guardar factura de compra: ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo guardar la factura. Inténtalo de nuevo.');
         }
     }
 
@@ -242,8 +250,9 @@ class FormRecepcion extends Component
             $this->facturaCompra->refresh()->load(['proveedor', 'detalles.producto', 'detalles.marca']);
             $this->modalConfirmar = false;
             $this->dispatch('recepcion-confirmada');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al confirmar la recepción: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al confirmar recepción de factura #' . $this->facturaCompra->id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo confirmar la recepción. Inténtalo de nuevo.');
         }
     }
 }

@@ -14,6 +14,12 @@
         {{ __('Stock actualizado con éxito!') }}
     </x-action-message>
 
+    @if (session()->has('error'))
+    <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ session('error') }}
+    </div>
+    @endif
+
     {{-- Modal Producto --}}
     <x-dialog-modal wire:model.live="modalProducto">
 
@@ -60,12 +66,18 @@
         <x-slot name="title">{{ $modalConfirmTitle }}</x-slot>
         <x-slot name="content">{{ $modalConfirmContent }}</x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="cerrarConfirmacion">No</x-secondary-button>
+            <x-secondary-button wire:click="cerrarConfirmacion" wire:loading.attr="disabled" wire:target="crear,editar,delete">No</x-secondary-button>
 
             @if ($form)
-                <x-button type="submit" form="form-{{$form}}-producto" class="ml-3">Sí</x-button>
+                <x-button type="submit" form="form-{{$form}}-producto" class="ml-3" wire:loading.attr="disabled" wire:target="{{ $form }}">
+                    <span wire:loading.remove wire:target="{{ $form }}">Sí</span>
+                    <span wire:loading wire:target="{{ $form }}">Guardando...</span>
+                </x-button>
             @else
-                <x-button wire:click="delete" class="ml-3">Sí</x-button>
+                <x-button wire:click="delete" class="ml-3" wire:loading.attr="disabled" wire:target="delete">
+                    <span wire:loading.remove wire:target="delete">Sí</span>
+                    <span wire:loading wire:target="delete">Eliminando...</span>
+                </x-button>
             @endif
         </x-slot>
     </x-confirmation-modal>
@@ -108,15 +120,15 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="cerrarStock">
+            <x-secondary-button wire:click="cerrarStock" wire:loading.attr="disabled" wire:target="ajustarStock">
                 Cancelar
             </x-secondary-button>
 
-            <x-button wire:click="ajustarStock('aumentar')" class="ml-3 bg-emerald-600 hover:bg-emerald-700">
+            <x-button wire:click="ajustarStock('aumentar')" class="ml-3 bg-emerald-600 hover:bg-emerald-700" wire:loading.attr="disabled" wire:target="ajustarStock">
                 Aumentar
             </x-button>
 
-            <x-button wire:click="ajustarStock('disminuir')" class="ml-3 bg-rose-600 hover:bg-rose-700">
+            <x-button wire:click="ajustarStock('disminuir')" class="ml-3 bg-rose-600 hover:bg-rose-700" wire:loading.attr="disabled" wire:target="ajustarStock">
                 Disminuir
             </x-button>
         </x-slot>

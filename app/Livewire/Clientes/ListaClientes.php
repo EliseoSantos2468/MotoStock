@@ -13,6 +13,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ListaClientes extends Component
 {
@@ -165,8 +166,9 @@ class ListaClientes extends Component
 
             $this->cerrarModal();
             $this->dispatch('cliente-guardado');
-        } catch(\Exception $e) {
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        } catch(\Throwable $e) {
+            Log::error('Error al crear cliente: ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo crear el cliente. Verifica que el DUI no esté ya registrado.');
         }
     }
 
@@ -189,8 +191,9 @@ class ListaClientes extends Component
             
             $this->cerrarModal();
             $this->dispatch('cliente-editado');
-        } catch(\Exception $e) {
-            session()->flash('error', 'Error al actualizar: ' . $e->getMessage());
+        } catch(\Throwable $e) {
+            Log::error('Error al editar cliente #' . $this->cliente_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo actualizar el cliente. Verifica que el DUI no esté ya registrado.');
         }
     }
 
@@ -220,7 +223,13 @@ class ListaClientes extends Component
     }
 
     public function editarClienteData($id) {
-        $cliente = Cliente::findOrFail($id);
+        $cliente = Cliente::find($id);
+
+        if (!$cliente) {
+            session()->flash('error', 'Ese cliente ya no existe. Puede que haya sido eliminado.');
+            return;
+        }
+
         $this->cliente_id = $id;
         $this->fill($cliente->toArray());
 
@@ -249,13 +258,18 @@ class ListaClientes extends Component
     }
 
     public function delete() {
-        $cliente = Cliente::findOrFail($this->cliente_id);
-        $cliente->referencias->each->delete();
-        $cliente->referencias()->detach();
-        $cliente->delete();
+        try {
+            $cliente = Cliente::findOrFail($this->cliente_id);
+            $cliente->referencias->each->delete();
+            $cliente->referencias()->detach();
+            $cliente->delete();
 
-        $this->cerrarModal();
-        $this->dispatch('cliente-eliminado');
+            $this->cerrarModal();
+            $this->dispatch('cliente-eliminado');
+        } catch (\Throwable $e) {
+            Log::error('Error al eliminar cliente #' . $this->cliente_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo eliminar el cliente. Puede que tenga ventas o créditos asociados.');
+        }
     }
 
     public function show($id) {

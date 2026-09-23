@@ -24,8 +24,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// --- RUTAS PROTEGIDAS (requieren sesión iniciada) ---
+// Todo lo que sigue expone datos del negocio (clientes, inventario, ventas,
+// proveedores, configuración) y solo debe verse autenticado. Antes cada
+// ruta individual necesitaba su propio ->middleware(['auth']) y varias no
+// lo tenían, quedando accesibles sin iniciar sesión.
+Route::middleware(['auth'])->group(function () {
+
 // --- DASHBOARD (Optimizado con índices) ---
-Route::middleware(['auth'])->get('/dashboard', function () {
+Route::get('/dashboard', function () {
     $today = Carbon::today();
     $monthStart = $today->copy()->startOfMonth();
     $prevMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
@@ -177,7 +184,7 @@ Route::get('/recepciones/{facturaCompra}', FormRecepcion::class)->name('ver-rece
 Route::get('/recepciones/{facturaCompra}/excel', function (\App\Models\FacturaCompra $facturaCompra) {
     $nombre = 'factura-' . str_replace(['/', '\\', ' '], '-', $facturaCompra->numero_factura) . '.xlsx';
     return Excel::download(new FacturaCompraExport($facturaCompra->load(['proveedor', 'detalles.producto', 'detalles.marca'])), $nombre);
-})->middleware(['auth'])->name('recepcion.excel');
+})->name('recepcion.excel');
 
 Route::get('/recepciones/{facturaCompra}/pdf', function (\App\Models\FacturaCompra $facturaCompra) {
     $factura = $facturaCompra->load(['proveedor', 'detalles.producto', 'detalles.marca']);
@@ -185,7 +192,9 @@ Route::get('/recepciones/{facturaCompra}/pdf', function (\App\Models\FacturaComp
     return Pdf::loadView('pdf.factura-compra', compact('factura'))
         ->setPaper('a4', 'landscape')
         ->stream($nombre);
-})->middleware(['auth'])->name('recepcion.pdf');
+})->name('recepcion.pdf');
 
 // --- CONFIGURACIÓN (Esta es la que causaba el error anterior) ---
 Route::get('/configuracion', Ajustes::class)->name('configuracion');
+
+}); // fin del grupo 'auth'

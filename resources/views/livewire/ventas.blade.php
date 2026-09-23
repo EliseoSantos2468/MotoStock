@@ -16,6 +16,12 @@
     </div>
     @endif
 
+    @if (session()->has('advertencia'))
+    <div class="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+        ⚠️ {{ session('advertencia') }}
+    </div>
+    @endif
+
     {{-- Modales --}}
     <x-dialog-modal wire:model.live="modalSeleccion">
         <x-slot name="title">Configurar Producto</x-slot>
@@ -76,39 +82,82 @@
                         </div>
                     <x-input-error for="cantidadAVender" class="mt-1" />
 
-                    {{-- ← NUEVO: Notificación de precio mayoreo --}}
                     @php
                     $marcaActual = $productoSeleccionado?->marcas->where('id', $marcaSeleccionada)->first();
                     @endphp
 
                     @if ($marcaActual)
-                    @if ($cantidadAVender >= $marcaActual->pivot->cantidad_mayoreo)
-                    {{-- Ya aplica mayoreo --}}
-                    <div class="mt-2 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                        <svg class="h-4 w-4 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p class="text-xs font-semibold text-green-700">
-                            ¡Precio de mayoreo aplicado!
-                            <span class="font-black">${{ number_format($marcaActual->pivot->precio_mayoreo, 2) }}</span>
-                            por unidad.
+                    @php
+                    $pv = $marcaActual->pivot;
+                    $precioManualNum = is_numeric($precioManual) ? (float) $precioManual : null;
+                    $precioElegido = $tipoPrecioItem === 'manual'
+                        ? ($precioManualNum ?? 0)
+                        : \App\Livewire\Ventas::precioSegunTipo($pv, $tipoPrecioItem);
+                    $cantidadNum = is_numeric($cantidadAVender) ? (int) $cantidadAVender : 0;
+                    @endphp
+                    <div class="mt-4">
+                        <x-label for="tipoPrecioItem" value="Tipo de precio" />
+                        <select id="tipoPrecioItem" wire:model.live="tipoPrecioItem" class="w-full rounded-md border-gray-300">
+                            <option value="cliente">Precio Cliente — ${{ number_format($pv->precio_cliente, 2) }}</option>
+                            <option value="taller">Precio Taller — {{ $pv->precio_taller !== null ? '$' . number_format($pv->precio_taller, 2) : 'no registrado (usa precio cliente)' }}</option>
+                            <option value="mayoreo">Precio Mayoreo — ${{ number_format($pv->precio_mayoreo, 2) }} (desde {{ $pv->cantidad_mayoreo }} u.)</option>
+                            <option value="manual">Precio Manual — escribir precio</option>
+                        </select>
+
+                        @if ($tipoPrecioItem === 'manual')
+                        <div class="mt-3">
+                            <x-label for="precioManual" value="Precio por unidad" />
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                                <x-input id="precioManual" type="number" step="0.01" min="0" class="w-full pl-7" wire:model.live.debounce.400ms="precioManual" placeholder="0.00" />
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Mínimo configurado: ${{ number_format(\App\Livewire\Ventas::precioMinimo($pv), 2) }}
+                                @if ($pv->precio_costo !== null) · Costo: ${{ number_format($pv->precio_costo, 2) }} @endif
+                            </p>
+                            <x-input-error for="precioManual" class="mt-1" />
+
+                            @if (!$alertaPrecioBajo && $precioManualNum !== null && \App\Livewire\Ventas::alertaPrecioManual($pv, $precioManualNum))
+                            <p class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                                {{ \App\Livewire\Ventas::alertaPrecioManual($pv, $precioManualNum) }}
+                            </p>
+                            @endif
+                        </div>
+                        @endif
+
+                        @if ($alertaPrecioBajo)
+                        <div class="mt-3 rounded-lg border-2 border-red-300 bg-red-50 p-3" role="alert">
+                            <p class="text-sm font-bold text-red-800">Precio muy bajo</p>
+                            <p class="mt-1 text-sm text-red-700">{{ $alertaPrecioBajo }}</p>
+                            <p class="mt-1 text-sm text-red-700">¿Deseas agregarlo al ticket de todas formas?</p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <button type="button" wire:click="agregarAlCarrito(true)" class="rounded-md bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700">
+                                    Sí, vender a este precio
+                                </button>
+                                <button type="button" wire:click="$set('alertaPrecioBajo', null)" class="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                                    No, cambiar precio
+                                </button>
+                            </div>
+                        </div>
+                        @endif
+
+                        <div class="mt-2 flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                            <span class="text-gray-600">{{ $cantidadNum }} x ${{ number_format($precioElegido, 2) }}</span>
+                            <span class="font-black text-gray-900">${{ number_format($precioElegido * $cantidadNum, 2) }}</span>
+                        </div>
+
+                        @if ($tipoPrecioItem === 'mayoreo' && $cantidadNum < $pv->cantidad_mayoreo)
+                        <p class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                            El mayoreo normalmente aplica desde {{ $pv->cantidad_mayoreo }} unidades; estás vendiendo {{ $cantidadNum }}.
                         </p>
-                    </div>
-                    @else
-                    {{-- Falta cantidad para mayoreo --}}
-                    <div class="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                        <svg class="h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
-                        </svg>
-                        <p class="text-xs text-amber-700">
-                            Compra
-                            <span class="font-black">{{ max(0, $marcaActual->pivot->cantidad_mayoreo - (int) $cantidadAVender) }}</span>
-                            unidad(es) más para obtener precio de mayoreo
-                            (<span class="font-black">${{ number_format($marcaActual->pivot->precio_mayoreo, 2) }}</span> c/u
-                            al comprar {{ $marcaActual->pivot->cantidad_mayoreo }} o más).
+                        @endif
+
+                        @if ($pv->precio_taller !== null && (float) $pv->precio_taller > (float) $pv->precio_cliente)
+                        <p class="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                            Revisa este producto: su precio de taller (${{ number_format($pv->precio_taller, 2) }}) es mayor que el de cliente (${{ number_format($pv->precio_cliente, 2) }}).
                         </p>
+                        @endif
                     </div>
-                    @endif
                     @endif
 
                 </div>
@@ -117,8 +166,11 @@
         </x-slot>
         <x-slot name="footer">
             <x-secondary-button wire:click="cerrarModal">Cancelar</x-secondary-button>
-            @if ($marcaSeleccionada)
-                <x-button wire:click="agregarAlCarrito" class="ml-3" :disabled="!$puedeAgregar">Añadir al Ticket</x-button>
+            @if ($marcaSeleccionada && !$alertaPrecioBajo)
+                <x-button wire:click="agregarAlCarrito" class="ml-3" :disabled="!$puedeAgregar" wire:loading.attr="disabled" wire:target="agregarAlCarrito">
+                    <span wire:loading.remove wire:target="agregarAlCarrito">Añadir al Ticket</span>
+                    <span wire:loading wire:target="agregarAlCarrito">Añadiendo...</span>
+                </x-button>
             @endif
         </x-slot>
     </x-dialog-modal>
@@ -131,16 +183,6 @@
             @enderror
             
             <div class="space-y-4">
-                {{-- Tipo de Cliente --}}
-                <div class="p-3 bg-gradient-to-r {{ $tipoClienteCompra == 'tallerista' ? 'from-purple-50 to-purple-100 border-purple-200' : 'from-indigo-50 to-indigo-100 border-indigo-200' }} rounded-lg border">
-                    <p class="text-xs font-bold {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-700' : 'text-indigo-700' }} uppercase tracking-wide">
-                        {{ $tipoClienteCompra == 'tallerista' ? '🔧 Tallerista' : '👤 Cliente Normal' }}
-                    </p>
-                    <p class="text-sm font-semibold {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-900' : 'text-indigo-900' }}">
-                        {{ $tipoClienteCompra == 'tallerista' ? 'Aplicando Precio de Taller' : 'Aplicando Precio de Mayoreo (si aplica)' }}
-                    </p>
-                </div>
-
                 {{-- Resumen de Productos --}}
                 <div class="border-t pt-3">
                     <p class="text-xs font-bold text-gray-600 uppercase mb-2">Detalle de Productos:</p>
@@ -156,6 +198,9 @@
                             </div>
                             <div class="text-[10px]">
                                 <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-semibold">{{ $item['tipoDescuento'] }}</span>
+                                @if (!empty($item['bajoMinimo']))
+                                <span class="inline-block px-2 py-0.5 bg-red-100 text-red-700 rounded font-semibold">Debajo del mínimo</span>
+                                @endif
                             </div>
                         </div>
                         @endforeach
@@ -227,20 +272,29 @@
                             Facturación
                         </h3>
 
-                        <div class="grid grid-cols-2 sm:flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto gap-1 sm:gap-0">
-                            <button wire:click="$set('tipoCliente', 'registrado')"
-                                class="px-3 py-1 text-xs font-bold rounded-md {{ $tipoCliente == 'registrado' ? 'bg-white shadow text-indigo-600' : 'text-gray-500' }}">
-                                Registrado
-                            </button>
-                            <button wire:click="$set('tipoCliente', 'invitado')"
-                                class="px-3 py-1 text-xs font-bold rounded-md {{ $tipoCliente == 'invitado' ? 'bg-white shadow text-indigo-600' : 'text-gray-500' }}">
-                                Invitado
-                            </button>
-                        </div>
+                        <select wire:model.live="tipoCliente" aria-label="Tipo de cliente" class="w-full sm:w-auto rounded-md border-gray-300 text-sm">
+                            <option value="registrado">Cliente registrado</option>
+                            <option value="invitado">Cliente invitado</option>
+                        </select>
                     </div>
 
                     @if($tipoCliente == 'registrado')
                     <div class="space-y-3">
+                        @if($clienteId && $clienteSeleccionadoNombre)
+                        {{-- Cliente elegido: queda fijo hasta que se quite --}}
+                        <div class="flex items-start justify-between gap-3 rounded-lg border-2 border-indigo-300 bg-indigo-50 p-3">
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-wide text-indigo-600">Cliente seleccionado</p>
+                                <p class="font-bold text-gray-900">{{ $clienteSeleccionadoNombre }}</p>
+                                @if($clienteSeleccionadoDui)
+                                <p class="text-xs text-gray-500">DUI: {{ $clienteSeleccionadoDui }}</p>
+                                @endif
+                            </div>
+                            <button type="button" wire:click="quitarCliente" class="shrink-0 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-bold text-gray-600 hover:bg-gray-50">
+                                Cambiar
+                            </button>
+                        </div>
+                        @else
                         <div>
                             <x-label value="Buscar Cliente (Nombre o DUI)" />
                             <x-input type="text" wire:model.live.debounce.400ms="busquedaCliente" class="w-full text-sm" placeholder="Ej: Juan Pérez o 00000000-0" />
@@ -250,15 +304,16 @@
                         @if($busquedaCliente != '')
                         <div class="border rounded-md divide-y max-h-40 overflow-y-auto">
                             @forelse($listaClientes as $cliente)
-                            <div wire:click="$set('clienteId', {{ $cliente->id }}); $set('busquedaCliente', '{{ $cliente->nombres_cliente }} {{ $cliente->apellidos_cliente }}')"
-                                class="p-2 text-sm hover:bg-indigo-50 cursor-pointer {{ $clienteId == $cliente->id ? 'bg-indigo-100' : '' }}">
+                            <button type="button" wire:key="cliente-{{ $cliente->id }}" wire:click="seleccionarCliente({{ $cliente->id }})"
+                                class="block w-full p-2 text-left text-sm hover:bg-indigo-50">
                                 <p class="font-bold">{{ $cliente->nombres_cliente }} {{ $cliente->apellidos_cliente }}</p>
                                 <p class="text-xs text-gray-500">DUI: {{ $cliente->dui_cliente }}</p>
-                            </div>
+                            </button>
                             @empty
                             <p class="p-2 text-xs text-gray-500">No se encontraron clientes.</p>
                             @endforelse
                         </div>
+                        @endif
                         @endif
                     </div>
                     @else
@@ -280,47 +335,15 @@
                     @endif
                 </div>
 
-                {{-- Tipo de Cliente para Compra --}}
-                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-purple-500 mb-6">
-                    <h3 class="font-bold text-gray-700 flex items-center mb-4">
-                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
-                        </svg>
-                        Tipo de Cliente para esta Compra
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button wire:click="$set('tipoClienteCompra', 'normal')"
-                            class="px-4 py-2 text-sm font-bold rounded-lg transition {{ $tipoClienteCompra == 'normal' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <div class="flex flex-col items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                <span>Cliente Normal</span>
-                                <span class="text-[10px] font-normal">Aplica Mayoreo</span>
-                            </div>
-                        </button>
-                        <button wire:click="$set('tipoClienteCompra', 'tallerista')"
-                            class="px-4 py-2 text-sm font-bold rounded-lg transition {{ $tipoClienteCompra == 'tallerista' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <div class="flex flex-col items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>Tallerista</span>
-                                <span class="text-[10px] font-normal">P. Taller Siempre</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-indigo-600 lg:sticky lg:top-6">
-                    {{-- Indicador de Tipo de Cliente --}}
-                    <div class="mb-4 p-3 rounded-lg {{ $tipoClienteCompra == 'tallerista' ? 'bg-purple-50 border border-purple-200' : 'bg-indigo-50 border border-indigo-200' }}">
-                        <p class="text-xs font-bold uppercase {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-700' : 'text-indigo-700' }}">
-                            {{ $tipoClienteCompra == 'tallerista' ? '🔧 Modo Tallerista' : '👤 Modo Cliente Normal' }}
-                        </p>
-                        <p class="text-sm font-semibold {{ $tipoClienteCompra == 'tallerista' ? 'text-purple-900' : 'text-indigo-900' }}">
-                            {{ $tipoClienteCompra == 'tallerista' ? 'Precio de Taller en todos los productos' : 'Aplicando Mayoreo cuando aplique' }}
-                        </p>
+                    <div class="mb-4">
+                        <x-label for="tipoPrecio" value="Precio para esta venta" />
+                        <select id="tipoPrecio" wire:model.live="tipoPrecio" class="w-full rounded-md border-gray-300">
+                            <option value="cliente">Precio Cliente</option>
+                            <option value="taller">Precio Taller</option>
+                            <option value="mayoreo">Precio Mayoreo</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Se aplica a todo el ticket. Puedes cambiarlo por producto abajo.</p>
                     </div>
 
                     <h3 class="font-black text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">Ticket de Venta</h3>
@@ -333,9 +356,17 @@
                             <div class="flex-1">
                                 <p class="font-bold text-gray-800">{{ $item['nombre'] }}</p>
                                 <p class="text-xs text-gray-500">{{ $item['marca'] }} | {{ $item['cantidad'] }} x ${{ number_format($item['precio'], 2) }}</p>
-                                <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded">
-                                    {{ $item['tipoDescuento'] ?? 'Precio Normal' }}
-                                </span>
+                                <select wire:model.live="carrito.{{ $indice }}.tipoPrecio" aria-label="Tipo de precio" class="mt-1 rounded-md border-gray-300 py-1 pl-2 pr-8 text-xs">
+                                    <option value="cliente">Precio Cliente</option>
+                                    <option value="taller">Precio Taller</option>
+                                    <option value="mayoreo">Precio Mayoreo</option>
+                                    @if(($item['precioManual'] ?? null) !== null)
+                                    <option value="manual">Precio Manual (${{ number_format($item['precioManual'], 2) }})</option>
+                                    @endif
+                                </select>
+                                @if (!empty($item['bajoMinimo']))
+                                <span class="ml-1 inline-block rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Debajo del mínimo</span>
+                                @endif
                             </div>
                             <div class="text-right ml-4">
                                 <p class="font-bold text-indigo-600">${{ number_format($item['subtotal'], 2) }}</p>

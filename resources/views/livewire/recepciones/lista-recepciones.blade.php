@@ -7,8 +7,11 @@
         <x-slot name="title">¿Eliminar factura?</x-slot>
         <x-slot name="content">Esta acción no se puede deshacer. ¿Desea eliminar la factura de compra?</x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('modalConfirm', false)">No</x-secondary-button>
-            <x-danger-button wire:click="eliminar" class="ml-3">Sí, eliminar</x-danger-button>
+            <x-secondary-button type="button" wire:click="$set('modalConfirm', false)" wire:loading.attr="disabled" wire:target="eliminar">No</x-secondary-button>
+            <x-danger-button wire:click="eliminar" class="ml-3" wire:loading.attr="disabled" wire:target="eliminar">
+                <span wire:loading.remove wire:target="eliminar">Sí, eliminar</span>
+                <span wire:loading wire:target="eliminar">Eliminando...</span>
+            </x-danger-button>
         </x-slot>
     </x-confirmation-modal>
 

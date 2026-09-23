@@ -9,6 +9,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 
 class ListaMarcas extends Component
@@ -73,7 +74,7 @@ class ListaMarcas extends Component
     public function delete(){
 
         try {
-            $marca = Marca::findOrFail($this->marca_id); 
+            $marca = Marca::findOrFail($this->marca_id);
 
             $marca->productos()->detach();
 
@@ -81,8 +82,9 @@ class ListaMarcas extends Component
 
             $this->cerrarModal();
             $this->dispatch('marca-eliminada');
-        } catch (\Exception $e) {
-            session()->flash('error', 'No se pudo eliminar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al eliminar marca #' . $this->marca_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo eliminar la marca. Puede que esté en uso por algún producto.');
         }
     }
 
@@ -101,7 +103,12 @@ class ListaMarcas extends Component
     }
 
     public function editarMarcaData($id){
-        $marca = Marca::findOrFail($id);
+        $marca = Marca::find($id);
+
+        if (!$marca) {
+            session()->flash('error', 'Esa marca ya no existe. Puede que haya sido eliminada.');
+            return;
+        }
 
         $this->marca_id = $id;
 
@@ -121,8 +128,9 @@ class ListaMarcas extends Component
 
             $this->cerrarModal();
             $this->dispatch('marca-editada');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al editar marca #' . $this->marca_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo guardar la marca. Inténtalo de nuevo.');
         }
     }
 
@@ -140,12 +148,13 @@ class ListaMarcas extends Component
             Marca::create([
                 'nombre_marca' => $this->nombre_marca,
             ]);
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
-        }
 
-        $this->cerrarModal();
-        $this->dispatch('marca-guardada');
+            $this->cerrarModal();
+            $this->dispatch('marca-guardada');
+        } catch (\Throwable $e) {
+            Log::error('Error al crear marca: ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo crear la marca. Inténtalo de nuevo.');
+        }
     }
 
     public function cerrarModal(){

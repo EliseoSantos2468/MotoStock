@@ -55,7 +55,10 @@
 
         <x-slot name="footer">
             <x-secondary-button wire:click="$set('modalAgregarDetalle', false)">Cancelar</x-secondary-button>
-            <x-button wire:click="agregarDetalle" class="ml-3">Agregar</x-button>
+            <x-button wire:click="agregarDetalle" class="ml-3" wire:loading.attr="disabled" wire:target="agregarDetalle">
+                <span wire:loading.remove wire:target="agregarDetalle">Agregar</span>
+                <span wire:loading wire:target="agregarDetalle">Agregando...</span>
+            </x-button>
         </x-slot>
     </x-dialog-modal>
     @endif
@@ -115,7 +118,10 @@
 
         <x-slot name="footer">
             <x-secondary-button wire:click="$set('modalConfirmar', false)">Cancelar</x-secondary-button>
-            <x-button wire:click="confirmarRecepcion" class="ml-3">Confirmar Recepción</x-button>
+            <x-button wire:click="confirmarRecepcion" class="ml-3" wire:loading.attr="disabled" wire:target="confirmarRecepcion">
+                <span wire:loading.remove wire:target="confirmarRecepcion">Confirmar Recepción</span>
+                <span wire:loading wire:target="confirmarRecepcion">Confirmando...</span>
+            </x-button>
         </x-slot>
     </x-dialog-modal>
 
@@ -376,8 +382,9 @@
         @endif
 
         @if (!$modoEdicion)
-            <x-button wire:click="guardarFactura">
-                Guardar Factura
+            <x-button wire:click="guardarFactura" wire:loading.attr="disabled" wire:target="guardarFactura">
+                <span wire:loading.remove wire:target="guardarFactura">Guardar Factura</span>
+                <span wire:loading wire:target="guardarFactura">Guardando...</span>
             </x-button>
         @elseif ($facturaCompra && $facturaCompra->estado !== 'recibida')
             <x-button wire:click="abrirConfirmarRecepcion" class="bg-emerald-600 hover:bg-emerald-700">

@@ -14,6 +14,13 @@
     <x-action-message class="mr-3" on="cliente-editado">
         {{ __('¡Cliente Editado con éxito!') }}
     </x-action-message>
+
+    @if (session()->has('error'))
+    <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ session('error') }}
+    </div>
+    @endif
+
     {{-- modal cliente --}}
     <x-dialog-modal wire:model.live="modalCliente" maxWidth="4xl">
         @if ($form == 'crear')            
@@ -35,12 +42,6 @@
                     </svg>
                     Procesando validación o guardado...
                 </div>
-
-                @if (session()->has('error'))
-                    <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {{ session('error') }}
-                    </div>
-                @endif
 
                 @if ($errors->any())
                     <div class="col-span-full rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

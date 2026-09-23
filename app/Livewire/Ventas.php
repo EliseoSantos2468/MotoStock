@@ -36,12 +36,30 @@ class Ventas extends Component
 
     // clientes
     public $tipoCliente = 'registrado';
-    public $tipoClienteCompra = 'normal'; // 'normal' o 'tallerista'
+    // Tipo de precio: 'cliente' (público), 'taller' o 'mayoreo'.
+    // $tipoPrecio es el predeterminado de la venta; cada línea del ticket
+    // guarda el suyo y se puede cambiar individualmente.
+    public $tipoPrecio = 'cliente';
+    public $tipoPrecioItem = 'cliente';
+    // Precio escrito a mano por el vendedor (tipo 'manual')
+    public $precioManual = null;
+    // Se llena cuando el precio manual está por debajo del mínimo configurado,
+    // para pedir confirmación antes de agregarlo al ticket.
+    public $alertaPrecioBajo = null;
     public $clienteId = null;
+    public $clienteSeleccionadoNombre = null;
+    public $clienteSeleccionadoDui = null;
     public $nombreInvitado = '';
     public $emailFacturacion = '';
     public $busquedaCliente = '';
     public $listaClientesCacheada = []; // Cache de clientes para evitar recalcular en cada render
+
+    public const TIPOS_PRECIO = [
+        'cliente' => 'Precio Cliente',
+        'taller'  => 'Precio Taller',
+        'mayoreo' => 'Precio Mayoreo',
+        'manual'  => 'Precio Manual',
+    ];
 
     #[Layout('layouts.app')]
     public function render()
@@ -72,6 +90,11 @@ class Ventas extends Component
      */
     public function updatedBusquedaCliente($value)
     {
+        // Si el vendedor vuelve a escribir, se descarta el cliente elegido.
+        $this->clienteId = null;
+        $this->clienteSeleccionadoNombre = null;
+        $this->clienteSeleccionadoDui = null;
+
         if ($this->tipoCliente == 'registrado') {
             $busquedaCliente = trim((string) $value);
             if ($busquedaCliente !== '') {
@@ -91,10 +114,43 @@ class Ventas extends Component
         }
     }
 
+    public function seleccionarCliente($id)
+    {
+        $cliente = Cliente::where('user_id', Auth::id())->find($id);
+
+        if (!$cliente) {
+            $this->addError('clienteId', 'El cliente seleccionado no existe.');
+            return;
+        }
+
+        $this->clienteId = $cliente->id;
+        $this->clienteSeleccionadoNombre = trim($cliente->nombres_cliente . ' ' . $cliente->apellidos_cliente);
+        $this->clienteSeleccionadoDui = $cliente->dui_cliente;
+        $this->busquedaCliente = '';
+        $this->listaClientesCacheada = [];
+        $this->resetErrorBag('clienteId');
+    }
+
+    public function quitarCliente()
+    {
+        $this->reset(['clienteId', 'clienteSeleccionadoNombre', 'clienteSeleccionadoDui', 'busquedaCliente']);
+        $this->listaClientesCacheada = [];
+    }
+
     public function seleccionarProducto($id)
     {
+        $producto = Producto::with('marcas')->find($id);
+
+        if (!$producto) {
+            session()->flash('error', 'Este producto ya no está disponible. Actualiza la lista e inténtalo de nuevo.');
+            return;
+        }
+
         $this->productoId = $id;
-        $this->productoSeleccionado = Producto::with('marcas')->find($id);
+        $this->productoSeleccionado = $producto;
+        $this->tipoPrecioItem = $this->tipoPrecio;
+        $this->precioManual = null;
+        $this->alertaPrecioBajo = null;
         $this->modalSeleccion = true;
     }
 
@@ -159,7 +215,7 @@ class Ventas extends Component
         $this->puedeAgregar = true;
     }
 
-    public function agregarAlCarrito()
+    public function agregarAlCarrito($confirmarPrecioBajo = false)
     {
         if (!$this->puedeAgregar) {
             $this->addError('cantidadAVender', $this->cantidadError ?? 'La cantidad no es válida para agregar.');
@@ -201,21 +257,30 @@ class Ventas extends Component
             return;
         }
 
-        // Determinar el precio según el tipo de cliente
-        if ($this->tipoClienteCompra === 'tallerista') {
-            // Tallerista siempre obtiene precio de taller
-            $precio = $marcaInfo->pivot->precio_taller ?? $marcaInfo->pivot->precio_cliente;
-            $tipoDescuento = 'Precio Taller';
-        } else {
-            // Cliente normal: aplica mayoreo si cumple cantidad
-            if ($this->cantidadAVender >= $marcaInfo->pivot->cantidad_mayoreo) {
-                $precio = $marcaInfo->pivot->precio_mayoreo;
-                $tipoDescuento = 'Precio Mayoreo';
-            } else {
-                $precio = $marcaInfo->pivot->precio_cliente;
-                $tipoDescuento = 'Precio Público';
+        $tipo = array_key_exists($this->tipoPrecioItem, self::TIPOS_PRECIO) ? $this->tipoPrecioItem : 'cliente';
+        $precioManual = null;
+
+        if ($tipo === 'manual') {
+            $this->validate([
+                'precioManual' => ['required', 'numeric', 'gt:0'],
+            ], [
+                'precioManual.required' => 'Escribe el precio que vas a dar.',
+                'precioManual.numeric' => 'El precio debe ser un número.',
+                'precioManual.gt' => 'El precio debe ser mayor a cero.',
+            ]);
+
+            $precioManual = round((float) $this->precioManual, 2);
+            $alerta = self::alertaPrecioManual($marcaInfo->pivot, $precioManual);
+
+            // Precio por debajo del mínimo: avisar y esperar confirmación.
+            if ($alerta && !$confirmarPrecioBajo) {
+                $this->alertaPrecioBajo = $alerta;
+                return;
             }
         }
+
+        $precio = self::precioSegunTipo($marcaInfo->pivot, $tipo, $precioManual);
+        $tipoDescuento = self::TIPOS_PRECIO[$tipo];
 
         $subtotal = $precio * $this->cantidadAVender;
         // Agregamos al carrito (Array en memoria)
@@ -227,12 +292,77 @@ class Ventas extends Component
             'precio'      => $precio,
             'cantidad'    => $this->cantidadAVender,
             'subtotal'    => $subtotal,
+            'tipoPrecio'  => $tipo,
+            'precioManual' => $precioManual,
+            'bajoMinimo'  => $tipo === 'manual' && self::alertaPrecioManual($marcaInfo->pivot, $precioManual) !== null,
             'tipoDescuento' => $tipoDescuento,
         ];
 
         $this->calcularTotal();
         $this->modalSeleccion = false;
-        $this->reset(['marcaSeleccionada', 'cantidadAVender', 'cantidadError', 'puedeAgregar']);
+        $this->reset(['marcaSeleccionada', 'cantidadAVender', 'cantidadError', 'puedeAgregar', 'precioManual', 'alertaPrecioBajo']);
+    }
+
+    public function updatedPrecioManual()
+    {
+        $this->alertaPrecioBajo = null;
+    }
+
+    public function updatedTipoPrecioItem()
+    {
+        $this->alertaPrecioBajo = null;
+    }
+
+    /**
+     * Precio más bajo configurado para el producto (cliente, taller o mayoreo).
+     */
+    public static function precioMinimo($pivot): float
+    {
+        return (float) collect([$pivot->precio_cliente, $pivot->precio_taller, $pivot->precio_mayoreo])
+            ->filter(fn ($p) => $p !== null && (float) $p > 0)
+            ->min();
+    }
+
+    /**
+     * Mensaje de alerta si el precio manual queda por debajo del costo o del
+     * precio mínimo configurado. null si el precio está bien.
+     */
+    public static function alertaPrecioManual($pivot, $precio): ?string
+    {
+        if ($precio === null) {
+            return null;
+        }
+
+        $precio = (float) $precio;
+        $costo = $pivot->precio_costo !== null ? (float) $pivot->precio_costo : null;
+
+        if ($costo !== null && $precio < $costo) {
+            return 'El precio $' . number_format($precio, 2) . ' está POR DEBAJO DEL COSTO ($' . number_format($costo, 2) . '). Esta venta genera pérdida.';
+        }
+
+        $minimo = self::precioMinimo($pivot);
+
+        if ($minimo > 0 && $precio < $minimo) {
+            return 'El precio $' . number_format($precio, 2) . ' está por debajo del precio mínimo configurado ($' . number_format($minimo, 2) . ').';
+        }
+
+        return null;
+    }
+
+    /**
+     * Precio unitario según el tipo elegido. Si el producto no tiene
+     * precio de taller o mayoreo registrado, se usa el precio de cliente.
+     */
+    public static function precioSegunTipo($pivot, string $tipo, $precioManual = null): float
+    {
+        $precio = match ($tipo) {
+            'manual'  => $precioManual,
+            'taller'  => $pivot->precio_taller,
+            'mayoreo' => $pivot->precio_mayoreo,
+            default   => $pivot->precio_cliente,
+        };
+
+        return (float) ($precio ?? $pivot->precio_cliente);
     }
 
     public function quitarDelCarrito($index)
@@ -351,78 +481,132 @@ class Ventas extends Component
 
                 return $recibo->id;
             });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Error al procesar venta: ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo procesar la venta. Verifica el stock disponible e inténtalo de nuevo.');
+            return;
+        }
 
+        // A partir de aquí la venta YA quedó registrada en la base de datos
+        // (recibo creado, stock descontado). Lo que siga (envío de correo)
+        // no debe poder marcar la venta como fallida ni dejar el carrito
+        // intacto, o el cajero podría repetir el cobro y duplicar la venta.
+        $tipoClienteVenta = $this->tipoCliente;
+        $emailFacturacionVenta = $this->emailFacturacion;
+
+        $this->reset(['carrito', 'totalVenta', 'clienteId', 'clienteSeleccionadoNombre', 'clienteSeleccionadoDui', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta', 'tipoPrecio']);
+        $this->resetErrorBag();
+
+        $this->dispatch('venta-realizada');
+        $this->dispatch('abrir-ticket', url: route('recibo.pdf', $idGenerado));
+
+        try {
             $reciboParaEmail = Recibo::with('cliente')->find($idGenerado);
             $destinatario = null;
 
-            if ($this->tipoCliente == 'registrado' && $reciboParaEmail && $reciboParaEmail->cliente) {
+            if ($tipoClienteVenta == 'registrado' && $reciboParaEmail && $reciboParaEmail->cliente) {
                 $destinatario = $reciboParaEmail->cliente->email_cliente;
-            } elseif ($this->tipoCliente == 'invitado' && $this->emailFacturacion) {
-                $destinatario = $this->emailFacturacion;
+            } elseif ($tipoClienteVenta == 'invitado' && $emailFacturacionVenta) {
+                $destinatario = $emailFacturacionVenta;
             }
 
             $correoCopia = 'sotosalvador53@gmail.com';
 
+            // Se encola (no se envía en el mismo request) para que el cajero
+            // no tenga que esperar a que responda el SMTP de Gmail antes de
+            // poder seguir vendiendo. El worker de la cola (`php artisan
+            // queue:work` / `composer run dev`) es quien realmente lo envía.
             if ($destinatario && strcasecmp($destinatario, $correoCopia) !== 0) {
                 Mail::to($destinatario)
                     ->cc($correoCopia)
-                    ->send(new EnviarReciboMailable($reciboParaEmail));
+                    ->queue(new EnviarReciboMailable($reciboParaEmail));
             } else {
-                Mail::to($correoCopia)->send(new EnviarReciboMailable($reciboParaEmail));
+                Mail::to($correoCopia)->queue(new EnviarReciboMailable($reciboParaEmail));
             }
-
-            $this->reset(['carrito', 'totalVenta', 'clienteId', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente', 'modalConfirmVenta', 'tipoClienteCompra']);
-            $this->tipoClienteCompra = 'normal'; // Reiniciar a normal después de cada venta
-            $this->resetErrorBag();
-
-            $this->dispatch('venta-realizada');
-            $this->dispatch('abrir-ticket', url: route('recibo.pdf', $idGenerado));
-        } catch (\Exception $e) {
-            session()->flash('error', 'Ocurrió un error al procesar la venta: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Venta #{$idGenerado} registrada, pero falló el envío del recibo por correo: " . $e->getMessage(), ['exception' => $e]);
+            session()->flash('advertencia', "La venta #{$idGenerado} se registró correctamente, pero no se pudo enviar el recibo por correo. Puedes descargarlo desde el ticket.");
         }
     }
 
     public function updatedTipoCliente()
     {
-        $this->reset(['clienteId', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente']);
+        $this->reset(['clienteId', 'clienteSeleccionadoNombre', 'clienteSeleccionadoDui', 'nombreInvitado', 'emailFacturacion', 'busquedaCliente']);
         $this->listaClientesCacheada = [];
         $this->resetErrorBag();
     }
 
-    public function updatedTipoClienteCompra()
+    /**
+     * Al cambiar el precio predeterminado se aplica a todo el ticket.
+     */
+    public function updatedTipoPrecio($value)
     {
-        // Recalcular precios del carrito cuando cambia el tipo de cliente
-        if (!empty($this->carrito)) {
-            $productosPorId = Producto::with('marcas')
-                ->whereIn('id', collect($this->carrito)->pluck('producto_id')->unique()->values())
-                ->get()
-                ->keyBy('id');
-
-            foreach ($this->carrito as $index => $item) {
-                $producto = $productosPorId->get($item['producto_id']);
-                if ($producto) {
-                    $marcaInfo = $producto->marcas->where('id', $item['marca_id'])->first();
-                    if ($marcaInfo) {
-                        if ($this->tipoClienteCompra === 'tallerista') {
-                            $precio = $marcaInfo->pivot->precio_taller ?? $marcaInfo->pivot->precio_cliente;
-                            $tipoDescuento = 'Precio Taller';
-                        } else {
-                            if ($item['cantidad'] >= $marcaInfo->pivot->cantidad_mayoreo) {
-                                $precio = $marcaInfo->pivot->precio_mayoreo;
-                                $tipoDescuento = 'Precio Mayoreo';
-                            } else {
-                                $precio = $marcaInfo->pivot->precio_cliente;
-                                $tipoDescuento = 'Precio Público';
-                            }
-                        }
-                        $this->carrito[$index]['precio'] = $precio;
-                        $this->carrito[$index]['subtotal'] = $precio * $item['cantidad'];
-                        $this->carrito[$index]['tipoDescuento'] = $tipoDescuento;
-                    }
-                }
-            }
-            $this->calcularTotal();
+        if (!array_key_exists($value, self::TIPOS_PRECIO) || $value === 'manual') {
+            $this->tipoPrecio = 'cliente';
         }
+
+        // Los precios escritos a mano no se sobrescriben.
+        foreach ($this->carrito as $index => $item) {
+            if (($item['tipoPrecio'] ?? null) !== 'manual') {
+                $this->carrito[$index]['tipoPrecio'] = $this->tipoPrecio;
+            }
+        }
+
+        $this->recalcularPreciosCarrito();
+    }
+
+    /**
+     * Cambio de tipo de precio en una sola línea del ticket
+     * (wire:model="carrito.N.tipoPrecio").
+     */
+    public function updatedCarrito($value, $key)
+    {
+        if (!str_ends_with((string) $key, '.tipoPrecio')) {
+            return;
+        }
+
+        $index = (int) explode('.', $key)[0];
+
+        if (isset($this->carrito[$index])) {
+            $valido = array_key_exists($value, self::TIPOS_PRECIO)
+                && ($value !== 'manual' || ($this->carrito[$index]['precioManual'] ?? null) !== null);
+
+            if (!$valido) {
+                $this->carrito[$index]['tipoPrecio'] = 'cliente';
+            }
+        }
+
+        $this->recalcularPreciosCarrito();
+    }
+
+    private function recalcularPreciosCarrito()
+    {
+        if (empty($this->carrito)) {
+            return;
+        }
+
+        $productosPorId = Producto::with('marcas')
+            ->whereIn('id', collect($this->carrito)->pluck('producto_id')->unique()->values())
+            ->get()
+            ->keyBy('id');
+
+        foreach ($this->carrito as $index => $item) {
+            $marcaInfo = $productosPorId->get($item['producto_id'])?->marcas->where('id', $item['marca_id'])->first();
+
+            if (!$marcaInfo) {
+                continue;
+            }
+
+            $tipo = $item['tipoPrecio'] ?? 'cliente';
+            $precio = self::precioSegunTipo($marcaInfo->pivot, $tipo, $item['precioManual'] ?? null);
+
+            $this->carrito[$index]['precio'] = $precio;
+            $this->carrito[$index]['bajoMinimo'] = $tipo === 'manual' && self::alertaPrecioManual($marcaInfo->pivot, $precio) !== null;
+            $this->carrito[$index]['subtotal'] = $precio * $item['cantidad'];
+            $this->carrito[$index]['tipoDescuento'] = self::TIPOS_PRECIO[$tipo];
+        }
+
+        $this->calcularTotal();
     }
 
     public function cerrarModal()
@@ -436,6 +620,9 @@ class Ventas extends Component
             'stockMaximo',
             'cantidadError',
             'puedeAgregar',
+            'tipoPrecioItem',
+            'precioManual',
+            'alertaPrecioBajo',
         ]);
     }
 }

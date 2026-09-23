@@ -17,9 +17,9 @@
                 </div>
                 <div>
                     <x-label value="Teléfono" />
-                    <div class="flex gap-2 mt-1">
+                    <div class="flex flex-col sm:flex-row gap-2 mt-1">
                         <select wire:model.live="codigo_pais"
-                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                            class="w-full sm:w-32 sm:shrink-0 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
                             @foreach ($paises as $codigo => $nombre)
                                 <option value="{{ $codigo }}">{{ $nombre }}</option>
                             @endforeach
@@ -29,7 +29,7 @@
                             type="tel"
                             inputmode="numeric"
                             maxlength="{{ $telefonoMaxlength }}"
-                            class="w-full"
+                            class="w-full sm:min-w-0 sm:flex-1"
                             placeholder="{{ $telefonoPlaceholder }}"
                             x-on:input="
                                 const ca = ['HN','GT','SV','NI','CR','PA'];
@@ -74,11 +74,17 @@
         <x-slot name="title">{{ $modalConfirmTitle }}</x-slot>
         <x-slot name="content">{{ $modalConfirmContent }}</x-slot>
         <x-slot name="footer">
-            <x-secondary-button wire:click="cerrarConfirmacion">No</x-secondary-button>
+            <x-secondary-button type="button" wire:click="cerrarConfirmacion" wire:loading.attr="disabled" wire:target="crear,editar,delete">No</x-secondary-button>
             @if ($form)
-                <x-button type="submit" form="form-{{ $form }}-proveedor" class="ml-3">Sí</x-button>
+                <x-button type="submit" form="form-{{ $form }}-proveedor" class="ml-3" wire:loading.attr="disabled" wire:target="{{ $form }}">
+                    <span wire:loading.remove wire:target="{{ $form }}">Sí</span>
+                    <span wire:loading wire:target="{{ $form }}">Guardando...</span>
+                </x-button>
             @else
-                <x-button wire:click="delete" class="ml-3">Sí</x-button>
+                <x-button type="button" wire:click="delete" class="ml-3" wire:loading.attr="disabled" wire:target="delete">
+                    <span wire:loading.remove wire:target="delete">Sí</span>
+                    <span wire:loading wire:target="delete">Eliminando...</span>
+                </x-button>
             @endif
         </x-slot>
     </x-confirmation-modal>

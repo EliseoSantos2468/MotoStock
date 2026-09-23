@@ -11,6 +11,7 @@ use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ListaProductos extends Component
 {
@@ -226,12 +227,13 @@ class ListaProductos extends Component
 
                 $producto->marcas()->attach($pivoteDatos);
             });
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error al crear: ' . $e->getMessage());
-        }
 
-        $this->cerrarModal();
-        $this->dispatch('producto-creado');
+            $this->cerrarModal();
+            $this->dispatch('producto-creado');
+        } catch (\Throwable $e) {
+            Log::error('Error al crear producto: ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo crear el producto. Inténtalo de nuevo.');
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -304,8 +306,9 @@ class ListaProductos extends Component
 
             $this->cerrarModal();
             $this->dispatch('producto-actualizado');
-        } catch (\Exception $e) {
-            session()->flash('error', 'No se pudo editar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al editar producto #' . $this->producto_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo editar el producto. Inténtalo de nuevo.');
         }
     }
 
@@ -381,8 +384,9 @@ class ListaProductos extends Component
                     'cantidad' => $nuevaCantidad,
                 ]);
             });
-        } catch (\Exception $e) {
-            session()->flash('error', 'No se pudo ajustar el stock: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al ajustar stock del producto #' . $this->stock_producto_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo ajustar el stock. Inténtalo de nuevo.');
 
             return;
         }
@@ -415,8 +419,9 @@ class ListaProductos extends Component
 
             $this->cerrarModal();
             $this->dispatch('producto-eliminado');
-        } catch (\Exception $e) {
-            session()->flash('error', 'No se pudo eliminar: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Error al eliminar producto #' . $this->producto_id . ': ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo eliminar el producto. Puede que tenga ventas o compras asociadas.');
         }
     }
 
@@ -546,7 +551,7 @@ class ListaProductos extends Component
 
     private function reglasProducto(?int $id = null): array
     {
-        $uniqueRule = Rule::unique('producto', 'nombre_producto');
+        $uniqueRule = Rule::unique('producto', 'nombre_producto')->where('user_id', Auth::id());
 
         if ($id !== null) {
             $uniqueRule->ignore($id);
