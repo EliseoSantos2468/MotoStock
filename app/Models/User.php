@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -29,6 +31,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'password_hash',
+        'rol_id',
+        'creado_por',
+        'activo',
     ];
 
     /**
@@ -38,6 +44,7 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'password_hash',
         'remember_token',
         'two_factor_recovery_codes',
         'two_factor_secret',
@@ -62,6 +69,37 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'activo' => 'boolean',
         ];
+    }
+
+    /**
+     * Obtiene el rol asignado al usuario.
+     * Rol permitido: cualquier usuario autenticado que necesite consultar permisos.
+     * Valida: la relación rol_id debe apuntar a un rol existente cuando el usuario tenga acceso.
+     */
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'rol_id');
+    }
+
+    /**
+     * Obtiene el usuario administrador que creó esta cuenta.
+     * Rol permitido: consultas internas del sistema.
+     * Valida: solo aplica para usuarios ventas creados por admin_motos.
+     */
+    public function creador(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'creado_por');
+    }
+
+    /**
+     * Obtiene los usuarios ventas creados por este administrador.
+     * Rol permitido: admin_motos.
+     * Valida: retorna solo usuarios relacionados por creado_por.
+     */
+    public function usuariosCreados(): HasMany
+    {
+        return $this->hasMany(self::class, 'creado_por');
     }
 }

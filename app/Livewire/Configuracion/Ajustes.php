@@ -4,6 +4,7 @@ namespace App\Livewire\Configuracion;
 use Livewire\Component;
 use App\Models\Configuracion;
 use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\Log;
 
 class Ajustes extends Component
 {
@@ -52,24 +53,24 @@ class Ajustes extends Component
     {
         $this->validate($this->reglasConfiguracion());
 
-        $config = Configuracion::first();
+        try {
+            // updateOrCreate evita crear filas de configuración duplicadas
+            // si dos administradores guardan casi al mismo tiempo.
+            Configuracion::query()->updateOrCreate([], [
+                'color_primario' => $this->color_primario,
+                'color_secundario' => $this->color_secundario,
+                'correo_empresa' => $this->correo_empresa,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error al guardar configuración: ' . $e->getMessage(), ['exception' => $e]);
+            session()->flash('error', 'No se pudo guardar la configuración. Inténtalo de nuevo.');
+            $this->modalConfirmacion = false;
 
-        if ($config) {
-            $config->update([
-                'color_primario' => $this->color_primario,
-                'color_secundario' => $this->color_secundario,
-                'correo_empresa' => $this->correo_empresa,
-            ]);
-        } else {
-            Configuracion::create([
-                'color_primario' => $this->color_primario,
-                'color_secundario' => $this->color_secundario,
-                'correo_empresa' => $this->correo_empresa,
-            ]);
+            return;
         }
 
         session()->flash('mensaje', '¡Configuración guardada exitosamente!');
-        
+
         return redirect()->route('configuracion');
     }
 

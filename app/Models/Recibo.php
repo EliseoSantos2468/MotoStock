@@ -3,15 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToUser;
 
 class Recibo extends Model
 {
+    use BelongsToUser;
+
     protected $table='recibos';
 
     protected $fillable=[
         'fecha',
         'total',
-        'id_cliente'
+        'id_cliente',
+        'nombre_invitado',
+        'email_invitado',
+        'user_id'
     ];
 
     public function cliente(){

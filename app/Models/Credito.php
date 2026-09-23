@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToUser;
 
 class Credito extends Model
 {
+    use BelongsToUser;
+
     protected $table = 'credito';
 
     protected $fillable = [
@@ -16,6 +19,7 @@ class Credito extends Model
         'interes_id',
         'cliente_id',
         'fechas_id',
+        'user_id',
     ];
 
     public function cuotas(){

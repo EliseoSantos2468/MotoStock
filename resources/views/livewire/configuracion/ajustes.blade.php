@@ -8,6 +8,12 @@
             </div>
         @endif
 
+        @if (session()->has('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <form wire:submit.prevent="confirmarGuardado" class="mx-auto w-full max-w-2xl space-y-6">
             
             <div>
@@ -58,11 +64,12 @@
             </x-slot>
 
             <x-slot name="footer">
-                <button wire:click="$set('modalConfirmacion', false)" class="w-full sm:w-auto sm:mr-3 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">
+                <button wire:click="$set('modalConfirmacion', false)" wire:loading.attr="disabled" wire:target="guardarConfiguracion" class="w-full sm:w-auto sm:mr-3 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">
                     Cancelar
                 </button>
-                <button wire:click="guardarConfiguracion" class="w-full sm:w-auto px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 transition-colors">
-                    Sí, aplicar cambios
+                <button wire:click="guardarConfiguracion" wire:loading.attr="disabled" wire:target="guardarConfiguracion" class="w-full sm:w-auto px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 transition-colors">
+                    <span wire:loading.remove wire:target="guardarConfiguracion">Sí, aplicar cambios</span>
+                    <span wire:loading wire:target="guardarConfiguracion">Guardando...</span>
                 </button>
             </x-slot>
         </x-dialog-modal>

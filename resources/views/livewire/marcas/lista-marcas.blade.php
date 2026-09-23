@@ -10,6 +10,12 @@
         {{ __('Marca Editada con éxito!') }}
     </x-action-message>
 
+    @if (session()->has('error'))
+    <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ session('error') }}
+    </div>
+    @endif
+
     {{-- modal Marca --}}
     <x-dialog-modal wire:model.live="modalMarca">
         @if ($form == 'crear')            
@@ -61,17 +67,19 @@
             </x-slot>
 
             <x-slot name="footer">
-                <x-secondary-button wire:click="cerrarConfirmacion">
+                <x-secondary-button type="button" wire:click="cerrarConfirmacion" wire:loading.attr="disabled" wire:target="crear,editar,delete">
                     No
                 </x-secondary-button>
 
-                @if ($form)                    
-                    <x-button type="submit" form="form-{{$form}}-marca" class="ml-3">
-                        Si
+                @if ($form)
+                    <x-button type="submit" form="form-{{$form}}-marca" class="ml-3" wire:loading.attr="disabled" wire:target="{{ $form }}">
+                        <span wire:loading.remove wire:target="{{ $form }}">Sí</span>
+                        <span wire:loading wire:target="{{ $form }}">Guardando...</span>
                     </x-button>
                 @else
-                    <x-button type="submit" wire:click="delete" class="ml-3">
-                        Si
+                    <x-button type="button" wire:click="delete" class="ml-3" wire:loading.attr="disabled" wire:target="delete">
+                        <span wire:loading.remove wire:target="delete">Sí</span>
+                        <span wire:loading wire:target="delete">Eliminando...</span>
                     </x-button>
                 @endif
             </x-slot>
@@ -115,7 +123,7 @@
                 <x-td class="text-sm font-medium text-gray-900">{{ $marca->nombre_marca }}</x-td>
                 <x-td class="flex justify-end gap-2 text-right text-sm font-medium">
                         <x-btn-editar wire:click="editarMarca({{ $marca->id }})" />
-                        <x-btn-Eliminar wire:click="eliminarMarca({{ $marca->id }})" />
+                        <x-btn-eliminar wire:click="eliminarMarca({{ $marca->id }})" />
                 </x-td>
             </x-tr>
             @endforeach

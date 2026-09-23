@@ -35,10 +35,6 @@
                     <p class="text-gray-900 font-medium">{{ $cliente->dui_cliente }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500 uppercase font-bold">NIT</p>
-                    <p class="text-gray-900 font-medium">{{ $cliente->nit_cliente }}</p>
-                </div>
-                <div>
                     <p class="text-sm text-gray-500 uppercase font-bold">Teléfono</p>
                     <p class="text-indigo-600 font-bold">{{ $cliente->telefono_cliente }}</p>
                 </div>
